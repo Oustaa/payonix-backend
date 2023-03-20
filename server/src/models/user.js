@@ -1,5 +1,5 @@
-const { Sequelize, DataTypes } = require("sequelize");
-const sequelize = new Sequelize("mysql::memory:");
+const { DataTypes } = require("sequelize");
+const { sequelize } = require("../database/sql.connect");
 
 const User = sequelize.define("User", {
   a_id: {

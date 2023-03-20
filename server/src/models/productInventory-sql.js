@@ -1,5 +1,5 @@
-const { Sequelize, DataTypes } = require("sequelize");
-const sequelize = new Sequelize("sqlite::memory:");
+const { DataTypes } = require("sequelize");
+const { sequelize } = require("../database/sql.connect");
 
 const ProductInventory = sequelize.define("ProductInventory", {
   pi_id: {

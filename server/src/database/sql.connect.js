@@ -15,4 +15,4 @@ function connect(cb) {
     .catch((err) => console.error("Unable to connect to the database:", err));
 }
 
-module.exports = connect;
+module.exports = { connect, sequelize };
