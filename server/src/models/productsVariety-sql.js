@@ -29,6 +29,9 @@ const ProductVariety = sequelize.define("ProductVariety", {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  pv_product_id: {
+    type: DataTypes.STRING,
+  },
 });
 
 module.exports = ProductVariety;

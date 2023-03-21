@@ -12,9 +12,11 @@ const Artisan = sequelize.define("Artisan", {
   },
   a_phone: {
     type: DataTypes.STRING,
+    allowNull: true,
   },
   a_address: {
     type: DataTypes.STRING,
+    allowNull: true,
   },
   a_total: {
     type: DataTypes.INTEGER,

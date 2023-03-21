@@ -19,7 +19,18 @@ const ProductInventory = sequelize.define("ProductInventory", {
   },
   pi_amount: {
     type: DataTypes.FLOAT,
-    defaultValue: pi_unit_price.value * pi_quantity.value,
+    defaultValue: 0,
+  },
+  pi_artisan_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  pi_raw_mat_inv_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  pi_prod_variant_id: {
+    type: DataTypes.STRING,
   },
 });
 

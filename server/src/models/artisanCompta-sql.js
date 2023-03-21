@@ -17,6 +17,10 @@ const ArtisanCompta = sequelize.define("ArtisanCompta", {
   ac_note: {
     type: DataTypes.TEXT,
   },
+  ac_artisan_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 });
 
 module.exports = ArtisanCompta;

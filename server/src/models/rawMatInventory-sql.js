@@ -24,10 +24,18 @@ const RowMaterialInventory = sequelize.define("RowMaterialInventory", {
   },
   rmi_rawMat_prod: {
     type: DataTypes.FLOAT,
-    defaultValue: rmi_quantity.value / rmi_estimated_nbr_prod.value,
+    defaultValue: 0,
   },
   rmi_rawMat_price_prod: {
     type: DataTypes.FLOAT,
+  },
+  rmi_artisan_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  rmi_raw_mat_stock_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
 });
 

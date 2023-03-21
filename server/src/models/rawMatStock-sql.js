@@ -22,13 +22,21 @@ const RowMaterialStock = sequelize.define("RowMaterialStock", {
   },
   rms_amount: {
     type: DataTypes.FLOAT,
-    defaultValue: rms_unit_price.value * rms_quantity.value,
+    defaultValue: 0,
   },
   rms_availability: {
     type: DataTypes.INTEGER,
   },
   rms_price_prod: {
     type: DataTypes.FLOAT,
+  },
+  rms_supplier_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  rms_raw_mat_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
   },
 });
 

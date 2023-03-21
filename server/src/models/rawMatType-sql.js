@@ -20,6 +20,10 @@ const RowMaterialType = sequelize.define("RowMaterialType", {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  rmt_raw_mat_type: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
 });
 
 module.exports = RowMaterialType;

@@ -23,6 +23,8 @@ const Product = sequelize.define("Product", {
   p_image: {
     type: DataTypes.STRING,
   },
+  p_raw_mat_base_id: {
+    type: DataTypes.STRING,
+  },
 });
-
 module.exports = Product;

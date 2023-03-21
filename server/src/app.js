@@ -1,20 +1,15 @@
 const express = require("express");
 
-const User = require("./models/user");
+const artisansRouter = require("./routes/artisans.routes");
+const productsRouter = require("./routes/products.routes");
+const rawMaterialsRouter = require("./routes/rawMat.routes");
 
 const app = express();
 
 app.use(express.json());
 
-app.get("/", async (req, res) => {
-  const users = await User.findAll();
-  return res.json(users);
-});
-
-app.post("/", async (req, res) => {
-  const user = await User.create(req.body);
-
-  res.json(user);
-});
+app.use("/products", productsRouter);
+app.use("/artisans", artisansRouter);
+app.use("/rawMaterials", rawMaterialsRouter);
 
 module.exports = app;
