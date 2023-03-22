@@ -12,7 +12,7 @@ const RowMaterialInventory = sequelize.define("RowMaterialInventory", {
   },
   rmi_quantity: {
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
   },
   rmi_estimated_nbr_prod: {
     type: DataTypes.INTEGER,
@@ -28,6 +28,7 @@ const RowMaterialInventory = sequelize.define("RowMaterialInventory", {
   },
   rmi_rawMat_price_prod: {
     type: DataTypes.FLOAT,
+    defaultValue: 0,
   },
   rmi_artisan_id: {
     type: DataTypes.STRING,

@@ -8,7 +8,7 @@ const RowMaterialStock = sequelize.define("RowMaterialStock", {
   },
   rms_date_stock: {
     type: DataTypes.DATE,
-    allowNull: DataTypes.NOW,
+    defaultValue: DataTypes.NOW,
   },
   rms_description: {
     type: DataTypes.STRING,
@@ -26,13 +26,15 @@ const RowMaterialStock = sequelize.define("RowMaterialStock", {
   },
   rms_availability: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   rms_price_prod: {
     type: DataTypes.FLOAT,
+    defaultValue: 0,
   },
   rms_supplier_id: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   rms_raw_mat_id: {
     type: DataTypes.STRING,

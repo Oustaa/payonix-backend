@@ -6,21 +6,23 @@ const RowMaterialType = sequelize.define("RowMaterialType", {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
   },
-  rmt_type: {
+  rmt_name: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   rmt_reorder_point: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   rmt_availability: {
     type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   rmt_command_launched: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  rmt_raw_mat_type: {
+  rmt_raw_mat_base_type: {
     type: DataTypes.STRING,
     allowNull: false,
   },
