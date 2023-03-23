@@ -1,9 +1,8 @@
 const http = require("http");
 
 const app = require("./app");
-const { connect } = require("./database/sql.connect");
-
 const { createTables } = require("./models/index");
+const { connect } = require("./database/sql.connect");
 
 const PORT = 8000;
 

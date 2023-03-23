@@ -6,15 +6,17 @@ const Product = sequelize.define("Product", {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
   },
+  p_availibality: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   p_name: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  p_availibality: {
-    type: DataTypes.INTEGER,
-  },
   p_origin: {
     type: DataTypes.INTEGER,
+    allowNull: true,
   },
   p_added_at: {
     type: DataTypes.DATE,
@@ -22,9 +24,11 @@ const Product = sequelize.define("Product", {
   },
   p_image: {
     type: DataTypes.STRING,
+    allowNull: true,
   },
   p_raw_mat_base_id: {
     type: DataTypes.STRING,
+    allowNull: false,
   },
 });
 module.exports = Product;

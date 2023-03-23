@@ -9,13 +9,15 @@ const ProductVariety = sequelize.define("ProductVariety", {
   pv_name: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
   },
   pv_description: {
     type: DataTypes.STRING,
+    allowNull: true,
   },
   pv_image: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   pv_reorder_point: {
     type: DataTypes.INTEGER,

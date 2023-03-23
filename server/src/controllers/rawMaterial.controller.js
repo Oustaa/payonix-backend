@@ -1,9 +1,9 @@
 const { sequelize } = require("../database/sql.connect");
 
 const RawMatBase = require("../models/rawMatBase-sql");
-const RawMatInventory = require("../models/rawMatInventory-sql");
-const RawMatStock = require("../models/rawMatStock-sql");
 const RawMatType = require("../models/rawMatType-sql");
+const RawMatStock = require("../models/rawMatStock-sql");
+const RawMatInventory = require("../models/rawMatInventory-sql");
 
 async function getRawMatBase(req, res) {
   try {
@@ -73,12 +73,13 @@ async function postRawMatBase(req, res) {
 
   if (!rawMatBaseInfo.rmb_name)
     res.status(400).json({
-      error_message: "missing required field 'rmb_name'",
+      error_message: "missing required field",
+      missing_field: ["rmb_name"],
     });
 
   try {
     const rawMatBaseWithName = await RawMatBase.findOne({
-      where: { rmb_name: rawMatBaseInfo.rmb_name },
+      where: { rmb_name: rawMatBaseInfo.rmb_name.trim().toLowerCase() },
     });
     if (rawMatBaseWithName)
       return res.status(201).json({
@@ -86,7 +87,9 @@ async function postRawMatBase(req, res) {
         message: "can't create raw material base with the same name",
       });
 
-    const createdRawMatBase = await RawMatBase.create(rawMatBaseInfo);
+    const createdRawMatBase = await RawMatBase.create({
+      rmb_name: rawMatBaseInfo.rmb_name.trim().toLowerCase(),
+    });
 
     return res.status(201).json({
       createdItem: createdRawMatBase,
@@ -102,7 +105,7 @@ async function postRawMatBase(req, res) {
 
 async function postRawMatInventory(req, res) {
   const inventoryInfo = req.body;
-  console.log(inventoryInfo);
+
   if (
     !inventoryInfo.rmi_quantity ||
     !inventoryInfo.rmi_artisan_id ||
