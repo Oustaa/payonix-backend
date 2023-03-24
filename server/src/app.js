@@ -8,6 +8,7 @@ const storeImage = require("./utils/storeImages");
 const artisansRouter = require("./routes/artisans.routes");
 const productsRouter = require("./routes/products.routes");
 const rawMaterialsRouter = require("./routes/rawMat.routes");
+const authRouter = require("./routes/auth.routes");
 
 const app = express();
 
@@ -22,15 +23,14 @@ app.use(
   })
 );
 app.use(helmet());
-// app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "public", "images")));
 
 app.use("/products", productsRouter);
 app.use("/artisans", artisansRouter);
 app.use("/rawMaterials", rawMaterialsRouter);
+app.use("/auth", authRouter);
 
-// shouled be deleted and add the storeImage.single("file") middleware to whereever
 app.post("/upload", storeImage.single("file"), (req, res) => {
   console.log(req.file.path);
   res.status(200).json({
