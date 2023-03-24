@@ -26,7 +26,6 @@ const RowMaterialStock = sequelize.define("RowMaterialStock", {
   },
   rms_availability: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
   },
   rms_price_prod: {
     type: DataTypes.FLOAT,

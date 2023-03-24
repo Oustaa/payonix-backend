@@ -9,15 +9,17 @@ const {
   postRawMatInventory,
   postRawMatStock,
   postRawMatType,
+  putEstematedNbrProd,
 } = require("../controllers/rawMaterial.controller");
 
 router.get("/bases", getRawMatBase);
-router.get("/inventory", getRawMatInventory);
-router.get("/stock", getRawMatStock);
-router.get("/types", getRawMatType);
 router.post("/bases", postRawMatBase);
-router.post("/inventory", postRawMatInventory);
-router.post("/stock", postRawMatStock);
+router.get("/types", getRawMatType);
 router.post("/types", postRawMatType);
+router.get("/stock", getRawMatStock);
+router.post("/stock", postRawMatStock);
+router.get("/inventory", getRawMatInventory);
+router.post("/inventory", postRawMatInventory);
+router.put("/inventory/:id", putEstematedNbrProd);
 
 module.exports = router;

@@ -14,6 +14,12 @@ const RowMaterialInventory = sequelize.define("RowMaterialInventory", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  rmi_unit_price: {
+    type: DataTypes.INTEGER,
+  },
+  rmi_amount: {
+    type: DataTypes.INTEGER,
+  },
   rmi_estimated_nbr_prod: {
     type: DataTypes.INTEGER,
     allowNull: true,

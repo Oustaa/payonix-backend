@@ -22,7 +22,7 @@ async function getProductsVariety(req, res) {
 }
 
 async function postProduct(req, res) {
-  const productInfo = req.body;
+  const productInfo = req.query;
 
   if (!productInfo.p_raw_mat_base_id || !productInfo.p_name)
     return res.status(400).json({
@@ -38,7 +38,7 @@ async function postProduct(req, res) {
       where: { p_name: productInfo.p_name.trim().toLowerCase() },
     });
     if (productWithName)
-      return res.status(201).json({
+      return res.status(300).json({
         item: productWithName,
         message: `can't create product with the same name: ${productInfo.p_name}`,
       });
@@ -46,11 +46,12 @@ async function postProduct(req, res) {
     const createdProduct = await Product.create({
       p_name: productInfo.p_name.trim().toLowerCase(),
       p_raw_mat_base_id: productInfo.p_raw_mat_base_id,
+      p_image: `http://localhost:8000/${req.file.filename}`,
     });
 
     return res.status(201).json({
       item: createdProduct,
-      message: "material base was created successfully",
+      message: "product was created successfully",
     });
   } catch (error) {
     return res.status(500).json({
@@ -140,6 +141,50 @@ async function postProductVariety(req, res) {
   }
 }
 
+async function putProductImage(req, res) {
+  const { id } = req.params;
+  const p_image = `http://localhost:8000/${req.file.filename}`;
+  if (p_image) {
+    const updatedProduct = await Product.update(
+      { p_image },
+      {
+        where: {
+          p_id: id,
+        },
+      }
+    );
+
+    return res.status(201).json({
+      item: updatedProduct,
+      message: "product image was updated successfully",
+      p_image: p_image,
+    });
+  }
+}
+
+async function putProductVariety(req, res) {
+  const { id } = req.params;
+  const { pv_description } = req.query;
+
+  console.log("id :", id);
+
+  const info = {};
+  if (req.file) info.pv_image = `http://localhost:8000/${req.file.filename}`;
+  if (pv_description) info.pv_description = pv_description;
+
+  const updatedProductVariety = await ProductVariety.update(info, {
+    where: {
+      pv_id: id,
+    },
+  });
+
+  return res.status(201).json({
+    item: updatedProductVariety,
+    message: "product image was updated successfully",
+    info,
+  });
+}
+
 module.exports = {
   getProducts,
   getProductsInventory,
@@ -147,4 +192,6 @@ module.exports = {
   postProduct,
   postProductInventory,
   postProductVariety,
+  putProductImage,
+  putProductVariety,
 };

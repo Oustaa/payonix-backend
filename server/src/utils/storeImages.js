@@ -6,6 +6,8 @@ const storage = multer.diskStorage({
     cb(null, createFolder());
   },
   filename: function (req, file, cb) {
+    req.body.image_url =
+      createFolder() + "/" + Date.now() + "-" + file.originalname;
     cb(null, Date.now() + "-" + file.originalname);
   },
 });

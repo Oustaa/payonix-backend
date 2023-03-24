@@ -4,6 +4,7 @@ const RawMatBase = require("../models/rawMatBase-sql");
 const RawMatType = require("../models/rawMatType-sql");
 const RawMatStock = require("../models/rawMatStock-sql");
 const RawMatInventory = require("../models/rawMatInventory-sql");
+const RowMaterialInventory = require("../models/rawMatInventory-sql");
 
 async function getRawMatBase(req, res) {
   try {
@@ -109,7 +110,8 @@ async function postRawMatInventory(req, res) {
   if (
     !inventoryInfo.rmi_quantity ||
     !inventoryInfo.rmi_artisan_id ||
-    !inventoryInfo.rmi_raw_mat_stock_id
+    !inventoryInfo.rmi_raw_mat_stock_id ||
+    !inventoryInfo.rmi_unit_price
   )
     return res.status(400).json({
       error_message: `missing required field`,
@@ -117,8 +119,15 @@ async function postRawMatInventory(req, res) {
         !inventoryInfo.rmi_quantity && "rmi_quantity",
         !inventoryInfo.rmi_artisan_id && "rmi_artisan_id",
         !inventoryInfo.rmi_raw_mat_stock_id && "rmi_raw_mat_stock_id",
+        !inventoryInfo.rmi_unit_price && "rmi_unit_price",
       ],
     });
+
+  if (inventoryInfo.rmi_unit_price && inventoryInfo.rmi_quantity)
+    inventoryInfo.rmi_amount =
+      inventoryInfo.rmi_unit_price * inventoryInfo.rmi_quantity;
+
+  console.log(inventoryInfo);
 
   try {
     const createdRawMatInventory = await RawMatInventory.create(inventoryInfo);
@@ -198,6 +207,47 @@ async function postRawMatType(req, res) {
   }
 }
 
+async function putEstematedNbrProd(req, res) {
+  const { id } = req.params;
+  const { rmi_estimated_nbr_prod } = req.body;
+
+  if (!rmi_estimated_nbr_prod) {
+    return res.status(403).json({
+      error_message:
+        "please provide an estimation for the number of product by raw material",
+    });
+  }
+
+  try {
+    const prodInventory = await RowMaterialInventory.findOne({
+      where: { rmi_id: id },
+    });
+
+    const rmi_rawMat_price_prod =
+      prodInventory.rmi_amount / rmi_estimated_nbr_prod;
+    const rmi_rawMat_prod = prodInventory.rmi_quantity / rmi_estimated_nbr_prod;
+
+    const updatedInventory = await RowMaterialInventory.update(
+      { rmi_estimated_nbr_prod, rmi_rawMat_price_prod, rmi_rawMat_prod },
+      {
+        where: {
+          rmi_id: id,
+        },
+      }
+    );
+
+    return res.status(201).json({
+      item: updatedInventory,
+      message: "product image was updated successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "server error",
+      error,
+    });
+  }
+}
+
 module.exports = {
   getRawMatBase,
   getRawMatInventory,
@@ -207,4 +257,5 @@ module.exports = {
   postRawMatInventory,
   postRawMatStock,
   postRawMatType,
+  putEstematedNbrProd,
 };
