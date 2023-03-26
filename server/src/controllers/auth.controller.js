@@ -72,4 +72,16 @@ async function signIn(req, res) {
   }
 }
 
-module.exports = { logIn, signIn };
+function isLoggedIn(req, res) {
+  const token = req.headers["authorization"];
+
+  jwt.verify(token, JWT_SECRET, function (err, user) {
+    if (err || !user)
+      return res
+        .status(401)
+        .json({ isLoggedIn: false, message: "you must be logged in" });
+    return res.status(200).json({ isLoggedIn: true });
+  });
+}
+
+module.exports = { logIn, signIn, isLoggedIn };

@@ -1,5 +1,7 @@
 const router = require("../utils/createRouter")();
 
+const { authorization } = require("../middlewares/auth");
+
 const { storeImage } = require("../middlewares/storeImage");
 const { errorHandler } = require("../middlewares/errorHandler");
 
@@ -15,17 +17,23 @@ const {
 } = require("../controllers/product.controller");
 
 // /products
-router.get("/", getProducts);
-router.post("/", storeImage, errorHandler, postProduct);
-router.put("/:id", storeImage, errorHandler, putProductImage);
+router.get("/", authorization, getProducts);
+router.post("/", authorization, storeImage, errorHandler, postProduct);
+router.put("/:id", authorization, storeImage, errorHandler, putProductImage);
 
 // /products/inventory
-router.get("/inventory", getProductsInventory);
-router.post("/inventory", postProductInventory);
+router.get("/inventory", authorization, getProductsInventory);
+router.post("/inventory", authorization, postProductInventory);
 
 // /products/variety
-router.get("/variety", getProductsVariety);
-router.post("/variety", postProductVariety);
-router.put("/variety/:id", storeImage, errorHandler, putProductVariety);
+router.get("/variety", authorization, getProductsVariety);
+router.post("/variety", authorization, postProductVariety);
+router.put(
+  "/variety/:id",
+  authorization,
+  storeImage,
+  errorHandler,
+  putProductVariety
+);
 
 module.exports = router;

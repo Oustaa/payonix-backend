@@ -1,5 +1,7 @@
 const router = require("../utils/createRouter")();
 
+const { authorization } = require("../middlewares/auth");
+
 const {
   getArtisans,
   postArtisan,
@@ -9,11 +11,11 @@ const {
   postArtisanCompta,
 } = require("../controllers/artisan.controller");
 
-router.get("/", getArtisans);
-router.post("/", postArtisan);
-router.put("/:id", putArtisanInfo);
-router.get("/comptas", getArtisansCompta);
-router.get("/:id/comptas", getComptaByArtisan);
-router.post("/compta", postArtisanCompta);
+router.get("/", authorization, getArtisans);
+router.post("/", authorization, postArtisan);
+router.put("/:id", authorization, putArtisanInfo);
+router.get("/comptas", authorization, getArtisansCompta);
+router.get("/:id/comptas", authorization, getComptaByArtisan);
+router.post("/compta", authorization, postArtisanCompta);
 
 module.exports = router;

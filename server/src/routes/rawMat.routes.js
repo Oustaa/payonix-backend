@@ -1,5 +1,7 @@
 const router = require("../utils/createRouter")();
 
+const { authorization } = require("../middlewares/auth");
+
 const {
   getRawMatBase,
   getRawMatInventory,
@@ -12,14 +14,14 @@ const {
   putEstematedNbrProd,
 } = require("../controllers/rawMaterial.controller");
 
-router.get("/bases", getRawMatBase);
-router.post("/bases", postRawMatBase);
-router.get("/types", getRawMatType);
-router.post("/types", postRawMatType);
-router.get("/stock", getRawMatStock);
-router.post("/stock", postRawMatStock);
-router.get("/inventory", getRawMatInventory);
-router.post("/inventory", postRawMatInventory);
-router.put("/inventory/:id", putEstematedNbrProd);
+router.get("/bases", authorization, getRawMatBase);
+router.post("/bases", authorization, postRawMatBase);
+router.get("/types", authorization, getRawMatType);
+router.post("/types", authorization, postRawMatType);
+router.get("/stock", authorization, getRawMatStock);
+router.post("/stock", authorization, postRawMatStock);
+router.get("/inventory", authorization, getRawMatInventory);
+router.post("/inventory", authorization, postRawMatInventory);
+router.put("/inventory/:id", authorization, putEstematedNbrProd);
 
 module.exports = router;
