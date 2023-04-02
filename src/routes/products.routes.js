@@ -27,7 +27,7 @@ router.post("/inventory", authorization, postProductInventory);
 
 // /products/variety
 router.get("/variety", authorization, getProductsVariety);
-router.post("/variety", authorization, postProductVariety);
+router.post("/variety", authorization, storeImage, postProductVariety);
 router.put(
   "/variety/:id",
   authorization,

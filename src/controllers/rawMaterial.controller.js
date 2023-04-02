@@ -19,9 +19,15 @@ async function getRawMatBase(req, res) {
 }
 
 async function getRawMatInventory(req, res) {
+  const query = `
+    SELECT rmi.*, a.a_name as a_name from rowmaterialinventories rmi
+    LEFT JOIN artisans a 
+    on a.a_id = rmi.rmi_artisan_id
+  `;
   try {
-    const rawMatInventorys = await RawMatInventory.findAll();
-
+    const rawMatInventorys = await sequelize.query(query, {
+      type: sequelize.QueryTypes.SELECT,
+    });
     return res.status(200).json(rawMatInventorys);
   } catch (error) {
     return res.status(500).json({

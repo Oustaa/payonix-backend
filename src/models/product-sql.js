@@ -14,10 +14,6 @@ const Product = sequelize.define("Product", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  p_origin: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  },
   p_added_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
@@ -28,7 +24,7 @@ const Product = sequelize.define("Product", {
   },
   p_raw_mat_base_id: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
 });
 module.exports = Product;

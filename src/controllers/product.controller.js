@@ -1,3 +1,5 @@
+const { sequelize } = require("../database/sql.connect");
+
 const Product = require("../models/product-sql");
 const ProductInventory = require("../models/productInventory-sql");
 const ProductVariety = require("../models/productsVariety-sql");
@@ -10,9 +12,25 @@ async function getProducts(req, res) {
 }
 
 async function getProductsInventory(req, res) {
-  const productsInventory = await ProductInventory.findAll();
+  const query = `SELECT pi.*, a.a_name as vendor, pv.pv_name AS name, p.p_name as catigory FROM productinventories pi
+  left join artisans a
+  on a.a_id = pi.pi_artisan_id
+  left join productvarieties pv
+  on pv.pv_id = pi.pi_prod_variant_id
+  left join products p 
+  on p.p_id = pv.pv_product_id`;
 
-  return res.status(200).json(productsInventory);
+  try {
+    const productsInventory = await sequelize.query(query, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    return res.status(200).json(productsInventory);
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "server error",
+    });
+  }
 }
 
 async function getProductsVariety(req, res) {
@@ -21,7 +39,7 @@ async function getProductsVariety(req, res) {
   return res.status(200).json(productsVariety);
 }
 
-async function postProduct(req, res) {
+async function postProduct(req, res, next) {
   const productInfo = req.query;
 
   if (!productInfo.p_raw_mat_base_id || !productInfo.p_name)
@@ -40,13 +58,13 @@ async function postProduct(req, res) {
     if (productWithName)
       return res.status(300).json({
         item: productWithName,
-        message: `can't create product with the same name: ${productInfo.p_name}`,
+        error_message: `can't create product with the same name: ${productInfo.p_name}`,
       });
 
     const createdProduct = await Product.create({
       p_name: productInfo.p_name.trim().toLowerCase(),
       p_raw_mat_base_id: productInfo.p_raw_mat_base_id,
-      p_image: `http://localhost:8000/${req.file.filename}`,
+      p_image: req.file.filename,
     });
 
     return res.status(201).json({
@@ -55,7 +73,8 @@ async function postProduct(req, res) {
     });
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
+      error_message:
+        "Sorry can't add product, Due to a server error try later please.",
       error,
     });
   }
@@ -90,7 +109,7 @@ async function postProductInventory(req, res) {
 
     return res.status(201).json({
       item: createdProductInventory,
-      message: "product inventory was created successfully",
+      error_message: "product inventory was created successfully",
     });
   } catch (error) {
     return res.status(500).json({
@@ -101,7 +120,7 @@ async function postProductInventory(req, res) {
 }
 
 async function postProductVariety(req, res) {
-  const productVarietyInfo = req.body;
+  const productVarietyInfo = req.query;
 
   if (!productVarietyInfo.pv_name || !productVarietyInfo.pv_product_id)
     return res.status(400).json({
@@ -116,24 +135,25 @@ async function postProductVariety(req, res) {
     const productVarietyWithName = await ProductVariety.findOne({
       where: { pv_name: productVarietyInfo.pv_name.trim().toLowerCase() },
     });
-    console.log(productVarietyWithName);
+
     if (productVarietyWithName)
       return res.status(201).json({
         item: productVarietyWithName,
-        message: `can't create a product variety with the same name: ${productVarietyInfo.pv_name}`,
+        error_message: `can't create a product variety with the same name: ${productVarietyInfo.pv_name}`,
       });
 
     const createdProductVariety = await ProductVariety.create({
-      productVarietyInfo,
+      ...productVarietyInfo,
       pv_name: productVarietyInfo.pv_name.trim().toLowerCase(),
-      pv_image: "sdfdsf",
+      pv_image: req.file.filename,
     });
 
     return res.status(201).json({
       item: createdProductVariety,
-      message: "product varirty was created successfully",
+      error_message: "product varirty was created successfully",
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       error_message: "server error",
       error,
@@ -156,7 +176,7 @@ async function putProductImage(req, res) {
 
     return res.status(201).json({
       item: updatedProduct,
-      message: "product image was updated successfully",
+      error_message: "product image was updated successfully",
       p_image: p_image,
     });
   }
@@ -180,7 +200,7 @@ async function putProductVariety(req, res) {
 
   return res.status(201).json({
     item: updatedProductVariety,
-    message: "product image was updated successfully",
+    error_message: "product image was updated successfully",
     info,
   });
 }

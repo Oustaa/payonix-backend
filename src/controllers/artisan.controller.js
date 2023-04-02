@@ -1,3 +1,5 @@
+const { sequelize } = require("../database/sql.connect");
+
 const Artisan = require("../models/artisan-sql");
 const Artisans = require("../models/artisan-sql");
 const ArtisanCompta = require("../models/artisanCompta-sql");
@@ -49,9 +51,17 @@ async function putArtisanInfo(req, res) {
 }
 
 async function getArtisansCompta(req, res) {
-  const artisanCompta = await ArtisanCompta.findAll();
-
-  return res.status(200).json(artisanCompta);
+  const query = `
+  SELECT ac.*, a.a_name FROM artisancompta ac
+  LEFT JOIN artisans a
+  on a.a_id = ac.ac_artisan_id
+  `;
+  try {
+    const artisanCompta = await sequelize.query(query, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+    return res.status(200).json(artisanCompta);
+  } catch (err) {}
 }
 
 async function getComptaByArtisan(req, res) {
