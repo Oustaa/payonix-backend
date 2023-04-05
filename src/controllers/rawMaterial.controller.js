@@ -20,9 +20,11 @@ async function getRawMatBase(req, res) {
 
 async function getRawMatInventory(req, res) {
   const query = `
-    SELECT rmi.*, a.a_name as a_name from rowmaterialinventories rmi
-    LEFT JOIN artisans a 
-    on a.a_id = rmi.rmi_artisan_id
+  SELECT rmi.*, a.a_name as a_name, rms.rms_unit_price as rmi_unit_price from RowMaterialInventories rmi
+  LEFT JOIN Artisans a 
+  on a.a_id = rmi.rmi_artisan_id
+  LEFT JOIN RowMaterialStocks rms
+  on rms.rms_id = rmi_raw_mat_stock_id
   `;
   try {
     const rawMatInventorys = await sequelize.query(query, {
@@ -37,10 +39,10 @@ async function getRawMatInventory(req, res) {
 }
 
 async function getRawMatStock(req, res) {
-  const query = ` SELECT rms.*, rmt.rmt_name AS rms_rm_type, rmb.rmb_name AS rms_rm_base FROM rowmaterialstocks rms 
-                  LEFT JOIN rowmaterialtypes rmt
+  const query = ` SELECT rms.*, rmt.rmt_name AS rms_rm_type, rmb.rmb_name AS rms_rm_base FROM RowMaterialStocks rms 
+                  LEFT JOIN RowMaterialTypes rmt
                   ON rms.rms_raw_mat_id = rmt.rmt_id
-                  LEFT JOIN rowmaterialbases rmb
+                  LEFT JOIN RowMaterialBases rmb
                   ON rmt.rmt_raw_mat_base_type = rmb.rmb_id 
                 `;
 
@@ -58,8 +60,8 @@ async function getRawMatStock(req, res) {
 }
 
 async function getRawMatType(req, res) {
-  const query = ` SELECT rmt.*, rmb.rmb_name as rmb_origin FROM rowmaterialtypes rmt
-                  LEFT join rowmaterialbases rmb
+  const query = ` SELECT rmt.*, rmb.rmb_name as rmb_origin FROM RowMaterialTypes rmt
+                  LEFT join RowMaterialBases rmb
                   on rmt.rmt_raw_mat_base_type = rmb.rmb_id `;
   try {
     const rawMatTypes = await sequelize.query(query, {
@@ -79,7 +81,7 @@ async function postRawMatBase(req, res) {
   const rawMatBaseInfo = req.body;
 
   if (!rawMatBaseInfo.rmb_name)
-    res.status(400).json({
+    return res.status(400).json({
       error_message: "missing required field",
       missing_field: ["rmb_name"],
     });
@@ -90,7 +92,7 @@ async function postRawMatBase(req, res) {
     });
     if (rawMatBaseWithName)
       return res.status(201).json({
-        createdItem: rawMatBaseWithName,
+        item: rawMatBaseWithName,
         message: "can't create raw material base with the same name",
       });
 
@@ -99,7 +101,7 @@ async function postRawMatBase(req, res) {
     });
 
     return res.status(201).json({
-      createdItem: createdRawMatBase,
+      item: createdRawMatBase,
       message: "material base was created successfully",
     });
   } catch (error) {
@@ -113,11 +115,12 @@ async function postRawMatBase(req, res) {
 async function postRawMatInventory(req, res) {
   const inventoryInfo = req.body;
 
+  // !inventoryInfo.rmi_unit_price
+  // !inventoryInfo.rmi_unit_price && "rmi_unit_price",
   if (
     !inventoryInfo.rmi_quantity ||
     !inventoryInfo.rmi_artisan_id ||
-    !inventoryInfo.rmi_raw_mat_stock_id ||
-    !inventoryInfo.rmi_unit_price
+    !inventoryInfo.rmi_raw_mat_stock_id
   )
     return res.status(400).json({
       error_message: `missing required field`,
@@ -125,24 +128,37 @@ async function postRawMatInventory(req, res) {
         !inventoryInfo.rmi_quantity && "rmi_quantity",
         !inventoryInfo.rmi_artisan_id && "rmi_artisan_id",
         !inventoryInfo.rmi_raw_mat_stock_id && "rmi_raw_mat_stock_id",
-        !inventoryInfo.rmi_unit_price && "rmi_unit_price",
       ],
     });
 
-  if (inventoryInfo.rmi_unit_price && inventoryInfo.rmi_quantity)
-    inventoryInfo.rmi_amount =
-      inventoryInfo.rmi_unit_price * inventoryInfo.rmi_quantity;
+  if (inventoryInfo.rmi_raw_mat_stock_id && inventoryInfo.rmi_quantity) {
+    const rms_up = await RawMatStock.findOne({
+      where: { rms_id: inventoryInfo.rmi_raw_mat_stock_id },
+    });
 
-  console.log(inventoryInfo);
+    const rmi_unit_price = rms_up.rms_unit_price;
+    const rmi_amount = rmi_unit_price * inventoryInfo.rmi_quantity;
 
+    if (inventoryInfo.rmi_estimated_nbr_prod) {
+      inventoryInfo.rmi_rawMat_price_prod =
+        rmi_amount / inventoryInfo.rmi_estimated_nbr_prod;
+      inventoryInfo.rmi_rawMat_prod =
+        inventoryInfo.rmi_quantity / inventoryInfo.rmi_estimated_nbr_prod;
+    }
+  }
   try {
-    const createdRawMatInventory = await RawMatInventory.create(inventoryInfo);
+    const createdRawMatInventory = await RawMatInventory.create({
+      ...inventoryInfo,
+      rmi_unit_price,
+      rmi_amount,
+    });
 
     return res.status(201).json({
-      createdItem: createdRawMatInventory,
+      item: createdRawMatInventory,
       message: "material inventory was created successfully",
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       error_message: "server error",
     });
@@ -151,9 +167,14 @@ async function postRawMatInventory(req, res) {
 
 async function postRawMatStock(req, res) {
   const rawMatStockInfo = req.body;
-  const rms_amount =
-    rawMatStockInfo?.rms_quantity * rawMatStockInfo?.rms_unit_price;
-  console.log(rawMatStockInfo);
+  const data = rawMatStockInfo.rms_date_stock;
+
+  const query = `
+          SELECT rmt.rmt_name, rmb.rmb_name from RowMaterialTypes rmt
+          left JOIN RowMaterialBases rmb
+          ON rmb.rmb_id = rmt.rmt_raw_mat_base_type
+          WHERE rmt.rmt_id = ? 
+            `;
   if (
     !rawMatStockInfo.rms_quantity ||
     !rawMatStockInfo.rms_unit_price ||
@@ -168,15 +189,25 @@ async function postRawMatStock(req, res) {
       ],
     });
 
+  const [{ rmt_name, rmb_name }] = await sequelize.query(query, {
+    type: sequelize.QueryTypes.SELECT,
+    replacements: [rawMatStockInfo.rms_raw_mat_id],
+  });
+  const rms_id = `${data}-${rmb_name}-${rmt_name}`;
+
+  const rms_amount =
+    rawMatStockInfo?.rms_quantity * rawMatStockInfo?.rms_unit_price;
+
   try {
     const createdRawMatStock = await RawMatStock.create({
       ...rawMatStockInfo,
+      rms_id,
       rms_availability: rawMatStockInfo.rms_quantity,
       rms_amount,
     });
 
-    return res.status(200).json({
-      createdItem: createdRawMatStock,
+    return res.status(201).json({
+      item: createdRawMatStock,
       message: "material stock was created successfully",
     });
   } catch (error) {
@@ -199,10 +230,13 @@ async function postRawMatType(req, res) {
     });
 
   try {
-    const createdRawMatType = await RawMatType.create(rawMatTypeInfo);
+    const createdRawMatType = await RawMatType.create({
+      ...rawMatTypeInfo,
+      rmt_name: rawMatTypeInfo.rmt_name.toLowerCase(),
+    });
 
-    return res.status(200).json({
-      createdItem: createdRawMatType,
+    return res.status(201).json({
+      item: createdRawMatType,
       message: "material stock was created successfully",
     });
   } catch (error) {

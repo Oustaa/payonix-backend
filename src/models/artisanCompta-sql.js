@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { DataTypes } = require("sequelize");
 const { sequelize } = require("../database/sql.connect");
 
 const ArtisanCompta = sequelize.define("ArtisanCompta", {
@@ -16,6 +16,7 @@ const ArtisanCompta = sequelize.define("ArtisanCompta", {
   },
   ac_note: {
     type: DataTypes.TEXT,
+    allowNull: null,
   },
   ac_artisan_id: {
     type: DataTypes.STRING,

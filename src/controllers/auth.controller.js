@@ -8,9 +8,6 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 async function logIn(req, res) {
-  console.log(req.cookies);
-  console.log(req.cookie);
-
   const { u_email, u_password } = req.body;
 
   try {
@@ -85,9 +82,8 @@ async function signIn(req, res) {
 }
 
 function isLoggedIn(req, res) {
-  const token = req.headers["authorization"];
-
-  console.log(token);
+  console.log("req.cookies", JSON.stringify(req.cookies));
+  const token = req.cookies.access_token;
 
   jwt.verify(token, JWT_SECRET, function (err, user) {
     if (err || !user) {

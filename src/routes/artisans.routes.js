@@ -16,6 +16,6 @@ router.post("/", authorization, postArtisan);
 router.put("/:id", authorization, putArtisanInfo);
 router.get("/comptas", authorization, getArtisansCompta);
 router.get("/:id/comptas", authorization, getComptaByArtisan);
-router.post("/compta", authorization, postArtisanCompta);
+router.post("/comptas", authorization, postArtisanCompta);
 
 module.exports = router;

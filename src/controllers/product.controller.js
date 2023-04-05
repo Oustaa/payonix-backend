@@ -2,7 +2,6 @@ const { sequelize } = require("../database/sql.connect");
 
 const Product = require("../models/product-sql");
 const ProductInventory = require("../models/productInventory-sql");
-const ProductVariety = require("../models/productsVariety-sql");
 const ProductsVariety = require("../models/productsVariety-sql");
 
 async function getProducts(req, res) {
@@ -12,12 +11,12 @@ async function getProducts(req, res) {
 }
 
 async function getProductsInventory(req, res) {
-  const query = `SELECT pi.*, a.a_name as vendor, pv.pv_name AS name, p.p_name as catigory FROM productinventories pi
-  left join artisans a
+  const query = `SELECT pi.*, a.a_name as vendor, pv.pv_name AS name, p.p_name as catigory FROM ProductInventories pi
+  left join Artisans a
   on a.a_id = pi.pi_artisan_id
-  left join productvarieties pv
+  left join ProductVarieties pv
   on pv.pv_id = pi.pi_prod_variant_id
-  left join products p 
+  left join Products p 
   on p.p_id = pv.pv_product_id`;
 
   try {
@@ -61,10 +60,12 @@ async function postProduct(req, res, next) {
         error_message: `can't create product with the same name: ${productInfo.p_name}`,
       });
 
+    const p_image = req?.file?.filename || "default image";
+
     const createdProduct = await Product.create({
       p_name: productInfo.p_name.trim().toLowerCase(),
       p_raw_mat_base_id: productInfo.p_raw_mat_base_id,
-      p_image: req.file.filename,
+      p_image,
     });
 
     return res.status(201).json({
@@ -84,6 +85,7 @@ async function postProductInventory(req, res) {
   const productInventoryInfo = req.body;
 
   if (
+    !productInventoryInfo.pi_artisan_id ||
     !productInventoryInfo.pi_quantity ||
     !productInventoryInfo.pi_unit_price ||
     !productInventoryInfo.pi_prod_variant_id ||
@@ -96,6 +98,7 @@ async function postProductInventory(req, res) {
         !productInventoryInfo.pi_unit_price && "pi_unit_price",
         !productInventoryInfo.pi_prod_variant_id && "pi_prod_variant_id",
         !productInventoryInfo.pi_raw_mat_inv_id && "pi_raw_mat_inv_id",
+        !productInventoryInfo.pi_artisan_id && "pi_artisan_id",
       ],
     });
 
@@ -122,13 +125,10 @@ async function postProductInventory(req, res) {
 async function postProductVariety(req, res) {
   const productVarietyInfo = req.query;
 
-  if (!productVarietyInfo.pv_name || !productVarietyInfo.pv_product_id)
+  if (!productVarietyInfo.pv_name)
     return res.status(400).json({
       error_message: "missing required fields",
-      missing_field: [
-        !productVarietyInfo.pv_product_id && "pv_product_id",
-        !productVarietyInfo.pv_name && "pv_name",
-      ],
+      missing_field: [!productVarietyInfo.pv_name && "pv_name"],
     });
 
   try {
@@ -137,15 +137,17 @@ async function postProductVariety(req, res) {
     });
 
     if (productVarietyWithName)
-      return res.status(201).json({
+      return res.status(409).json({
         item: productVarietyWithName,
         error_message: `can't create a product variety with the same name: ${productVarietyInfo.pv_name}`,
       });
 
+    const pv_image = req?.file?.filename || "default";
+
     const createdProductVariety = await ProductVariety.create({
       ...productVarietyInfo,
       pv_name: productVarietyInfo.pv_name.trim().toLowerCase(),
-      pv_image: req.file.filename,
+      pv_image,
     });
 
     return res.status(201).json({

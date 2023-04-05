@@ -14,6 +14,10 @@ const RowMaterialType = sequelize.define("RowMaterialType", {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  rmt_description: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   rmt_availability: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

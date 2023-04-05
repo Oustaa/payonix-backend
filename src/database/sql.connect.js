@@ -1,8 +1,11 @@
+require("dotenv").config();
 const Sequelize = require("sequelize");
 
-const sequelize = new Sequelize("payonix", "Ousta", "Ous192837465 @", {
-  host: "localhost",
-  dialect: "mysql",
+const { DB_HOST, DB_NAME, DB_USERNAME, DB_PASSWORD, DB_TYPE } = process.env;
+
+const sequelize = new Sequelize(DB_NAME, DB_USERNAME, DB_PASSWORD || null, {
+  host: DB_HOST,
+  dialect: DB_TYPE,
 });
 
 function connect(cb) {

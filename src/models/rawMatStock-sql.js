@@ -3,8 +3,7 @@ const { sequelize } = require("../database/sql.connect");
 
 const RowMaterialStock = sequelize.define("RowMaterialStock", {
   rms_id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.STRING,
   },
   rms_date_stock: {
     type: DataTypes.DATE,

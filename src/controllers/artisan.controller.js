@@ -15,14 +15,15 @@ async function postArtisan(req, res) {
 
   if (!artisanInfo.a_name)
     return res.status(400).json({
-      error_message: "missing required field 'name'",
+      error_message: "missing required field",
+      missing_field: ["a_name"],
     });
 
   const artisan = await Artisans.findOne({
     where: { a_name: artisanInfo.a_name },
   });
   if (artisan)
-    return res.json({
+    return res.status(409).json({
       artisan,
       error_message: `artisan with the name ${artisanInfo.a_name} already exists`,
     });
@@ -52,16 +53,19 @@ async function putArtisanInfo(req, res) {
 
 async function getArtisansCompta(req, res) {
   const query = `
-  SELECT ac.*, a.a_name FROM artisancompta ac
-  LEFT JOIN artisans a
+  SELECT ac.*, a.a_name FROM ArtisanCompta ac
+  LEFT JOIN Artisans a
   on a.a_id = ac.ac_artisan_id
   `;
   try {
     const artisanCompta = await sequelize.query(query, {
       type: sequelize.QueryTypes.SELECT,
     });
+    console.log(artisanCompta);
     return res.status(200).json(artisanCompta);
-  } catch (err) {}
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 async function getComptaByArtisan(req, res) {
