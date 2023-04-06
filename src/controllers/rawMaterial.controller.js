@@ -114,7 +114,17 @@ async function postRawMatBase(req, res) {
 
 async function postRawMatInventory(req, res) {
   const inventoryInfo = req.body;
+  const artisan_name = req.body.a_name;
+  const data = inventoryInfo.rms_date_stock;
 
+  const query = `
+      SELECT RowMaterialTypes.rmt_name, RowMaterialBases.rmb_name from RowMaterialStocks 
+      left JOIN RowMaterialTypes 
+      ON RowMaterialStocks.rms_raw_mat_id = RowMaterialTypes.rmt_id
+      left JOIN RowMaterialBases 
+      ON RowMaterialTypes.rmt_raw_mat_base_type = RowMaterialBases.rmb_id
+      WHERE RowMaterialStocks.rms_id = ? 
+    `;
   // !inventoryInfo.rmi_unit_price
   // !inventoryInfo.rmi_unit_price && "rmi_unit_price",
   if (
@@ -131,13 +141,20 @@ async function postRawMatInventory(req, res) {
       ],
     });
 
+  const [{ rmt_name, rmb_name }] = await sequelize.query(query, {
+    type: sequelize.QueryTypes.SELECT,
+    replacements: [inventoryInfo.rmi_raw_mat_stock_id],
+  });
+
+  const rmi_id = `${data}-${artisan_name}-${rmb_name}-${rmt_name}`;
+
   if (inventoryInfo.rmi_raw_mat_stock_id && inventoryInfo.rmi_quantity) {
     const rms_up = await RawMatStock.findOne({
       where: { rms_id: inventoryInfo.rmi_raw_mat_stock_id },
     });
 
-    const rmi_unit_price = rms_up.rms_unit_price;
-    const rmi_amount = rmi_unit_price * inventoryInfo.rmi_quantity;
+    var rmi_unit_price = rms_up.rms_unit_price;
+    var rmi_amount = rmi_unit_price * inventoryInfo.rmi_quantity;
 
     if (inventoryInfo.rmi_estimated_nbr_prod) {
       inventoryInfo.rmi_rawMat_price_prod =
@@ -151,6 +168,7 @@ async function postRawMatInventory(req, res) {
       ...inventoryInfo,
       rmi_unit_price,
       rmi_amount,
+      rmi_id,
     });
 
     return res.status(201).json({
@@ -250,6 +268,8 @@ async function postRawMatType(req, res) {
 async function putEstematedNbrProd(req, res) {
   const { id } = req.params;
   const { rmi_estimated_nbr_prod } = req.body;
+  console.log("id: " + id);
+  console.log("rmi_estimated_nbr_pro:" + rmi_estimated_nbr_prod);
 
   if (!rmi_estimated_nbr_prod) {
     return res.status(403).json({

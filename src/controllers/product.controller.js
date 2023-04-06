@@ -132,7 +132,7 @@ async function postProductVariety(req, res) {
     });
 
   try {
-    const productVarietyWithName = await ProductVariety.findOne({
+    const productVarietyWithName = await ProductsVariety.findOne({
       where: { pv_name: productVarietyInfo.pv_name.trim().toLowerCase() },
     });
 
@@ -144,7 +144,7 @@ async function postProductVariety(req, res) {
 
     const pv_image = req?.file?.filename || "default";
 
-    const createdProductVariety = await ProductVariety.create({
+    const createdProductVariety = await ProductsVariety.create({
       ...productVarietyInfo,
       pv_name: productVarietyInfo.pv_name.trim().toLowerCase(),
       pv_image,
@@ -194,7 +194,7 @@ async function putProductVariety(req, res) {
   if (req.file) info.pv_image = `http://localhost:8000/${req.file.filename}`;
   if (pv_description) info.pv_description = pv_description;
 
-  const updatedProductVariety = await ProductVariety.update(info, {
+  const updatedProductVariety = await ProductsVariety.update(info, {
     where: {
       pv_id: id,
     },

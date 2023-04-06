@@ -33,8 +33,8 @@ async function logIn(req, res) {
     );
     res.cookie("LogInToken", token, {
       maxAge: 43200,
-      httpOnly: true,
       secure: true,
+      URL: "http://localhost:3000/",
     });
 
     res.status(200).json({ accessToken: token, username: user.u_name });
@@ -83,7 +83,7 @@ async function signIn(req, res) {
 
 function isLoggedIn(req, res) {
   console.log("req.cookies", JSON.stringify(req.cookies));
-  const token = req.cookies.access_token;
+  const token = req.cookies.access_token || req.headers["authorization"];
 
   jwt.verify(token, JWT_SECRET, function (err, user) {
     if (err || !user) {

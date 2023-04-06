@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const storeImage = require("./utils/storeImages");
 
 const artisansRouter = require("./routes/artisans.routes");
+const supplierRouter = require("./routes/supplier.routes");
 const productsRouter = require("./routes/products.routes");
 const rawMaterialsRouter = require("./routes/rawMat.routes");
 const authRouter = require("./routes/auth.routes");
@@ -14,7 +15,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "*"],
+    origin: ["http://localhost:3000"],
     credentials: true,
   })
 );
@@ -25,12 +26,14 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.use((req, res, next) => {
   console.log(`url: ${req.url}, method: ${req.method}`);
-  console.log(req.cookies.access_token);
+  console.log("cookies");
+  console.log(req.cookies);
   next();
 });
 
 app.use("/api/products", productsRouter);
 app.use("/api/artisans", artisansRouter);
+app.use("/api/suppliers", supplierRouter);
 app.use("/api/rawMaterials", rawMaterialsRouter);
 app.use("/api/auth", authRouter);
 

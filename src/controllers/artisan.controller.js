@@ -48,7 +48,8 @@ async function putArtisanInfo(req, res) {
     },
   });
 
-  if (updatedArtisanCount[0] !== 0) return res.status(200).json(updatedArtisan);
+  if (updatedArtisanCount[0] !== 0)
+    return res.status(200).json(updatedArtisanCount);
 }
 
 async function getArtisansCompta(req, res) {

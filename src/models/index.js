@@ -8,6 +8,7 @@ const rawMatInventory = require("./rawMatInventory-sql");
 const rawMatStock = require("./rawMatStock-sql");
 const rawMatType = require("./rawMatType-sql");
 const supplier = require("./supplier-sql");
+const supplierCompta = require("./supplierCompta-sql");
 const user = require("./user-sql");
 
 async function createTables(force = false) {
@@ -21,6 +22,7 @@ async function createTables(force = false) {
   await rawMatInventory.sync({ force });
   await rawMatStock.sync({ force });
   await supplier.sync({ force });
+  await supplierCompta.sync({ force });
   await user.sync({ force });
 }
 

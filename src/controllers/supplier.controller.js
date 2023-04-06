@@ -1,89 +1,110 @@
-const Artisan = require("../models/artisan-sql");
-const Artisans = require("../models/artisan-sql");
-const ArtisanCompta = require("../models/artisanCompta-sql");
+const { sequelize } = require("../database/sql.connect");
 
-async function getArtisans(req, res) {
-  const artisan = await Artisans.findAll();
+const Supplier = require("../models/supplier-sql");
+const SupplierCompta = require("../models/supplierCompta-sql");
 
-  return res.status(200).json(artisan);
+async function getSupplier(req, res) {
+  const supplier = await Supplier.findAll();
+
+  return res.status(200).json(supplier);
 }
 
-async function postArtisan(req, res) {
-  const artisanInfo = req.body;
+async function postSupplier(req, res) {
+  const supplierInfo = req.body;
 
-  if (!artisanInfo.a_name)
+  if (!supplierInfo.s_name)
     return res.status(400).json({
-      error_message: "missing required field 'name'",
+      error_message: "missing required field",
+      missing_field: ["s_name"],
     });
 
-  const artisan = await Artisans.findOne({
-    where: { a_name: artisanInfo.a_name },
+  const supplier = await Supplier.findOne({
+    where: { s_name: supplierInfo.s_name },
   });
-  if (artisan)
+  if (supplier)
     return res.json({
-      artisan,
-      error_message: `artisan with the name ${artisanInfo.a_name} already exists`,
+      supplier,
+      error_message: `artisan with the name ${supplierInfo.s_name} already exists`,
     });
   try {
-    const artisan = await Artisans.create(artisanInfo);
+    const supplier = await Supplier.create(supplierInfo);
 
-    return res.status(201).json(artisan);
+    return res.status(201).json(supplier);
   } catch (error) {
     return res.status(500).json({
-      error_message: "artisan was not created",
+      error_message: "supplier was not created",
     });
   }
 }
 
-async function putArtisanInfo(req, res) {
+async function putSupplierInfo(req, res) {
   const { id } = req.params;
-  const artisanInfo = req.body;
+  const supplierInfo = req.body;
 
-  const updatedArtisanCount = await Artisan.update(artisanInfo, {
+  try {
+    const supplier = await Supplier.findOne({ s_id: id });
+    if (supplier)
+      return res.status(404).json({
+        error_message: `supplier with the id provided does not exist`,
+      });
+    const updatedSupplierCount = await Supplier.update(supplierInfo, {
+      where: {
+        s_id: id,
+      },
+    });
+
+    if (updatedSupplierCount[0] !== 0)
+      return res.status(200).json(updatedSupplierCount);
+  } catch (error) {
+    res.status(500).json({ error_message: "server error", error });
+  }
+}
+
+async function getSupplierCompta(req, res) {
+  const query = `
+  SELECT sc.*, s.s_name FROM SuppliersCompta sc
+  LEFT JOIN Suppliers s
+  on s.s_id = sc.sc_supplier_id
+  `;
+  try {
+    const supplierCompta = await sequelize.query(query, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+    console.log(supplierCompta);
+    return res.status(200).json(supplierCompta);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function getComptaBySupplier(req, res) {
+  const { id } = req.params;
+
+  const supplierCompta = await SupplierCompta.findAll({
     where: {
-      a_id: id,
+      sc_supplier_id: id,
     },
   });
 
-  if (updatedArtisanCount[0] !== 0) return res.status(200).json(updatedArtisan);
+  return res.status(200).json(supplierCompta);
 }
 
-async function getArtisansCompta(req, res) {
-  const artisanCompta = await ArtisanCompta.findAll();
+async function postSupplierCompta(req, res) {
+  const supplierComptaInfo = req.body;
 
-  return res.status(200).json(artisanCompta);
-}
-
-async function getComptaByArtisan(req, res) {
-  const { id } = req.params;
-
-  const artisanCompta = await ArtisanCompta.findAll({
-    where: {
-      ac_artisan_id: id,
-    },
-  });
-
-  return res.status(200).json(artisanCompta);
-}
-
-async function postArtisanCompta(req, res) {
-  const artisanComptaInfo = req.body;
-
-  console.log(artisanComptaInfo);
-
-  if (!artisanComptaInfo.ac_amount || !artisanComptaInfo.ac_artisan_id)
+  if (!supplierComptaInfo.sc_amount || !supplierComptaInfo.sc_supplier_id)
     return res.status(400).json({
       error_message: `missing required field`,
       missing_field: [
-        !artisanComptaInfo.ac_amount && "ac_amount",
-        !artisanComptaInfo.ac_artisan_id && "ac_artisan_id",
+        !supplierComptaInfo.sc_amount && "sc_amount",
+        !supplierComptaInfo.sc_supplier_id && "sc_supplier_id",
       ],
     });
 
   try {
-    const artisanCompta = await ArtisanCompta.create(artisanComptaInfo);
+    const supplierCompta = await SupplierCompta.create(supplierComptaInfo);
 
-    return res.status(201).json(artisanCompta);
+    return res.status(201).json(supplierCompta);
   } catch (error) {
     return res.status(500).json({
       error_message: "artisan compta was not created",
@@ -92,10 +113,10 @@ async function postArtisanCompta(req, res) {
 }
 
 module.exports = {
-  getArtisans,
-  postArtisan,
-  putArtisanInfo,
-  getArtisansCompta,
-  getComptaByArtisan,
-  postArtisanCompta,
+  getSupplier,
+  postSupplier,
+  putSupplierInfo,
+  getSupplierCompta,
+  getComptaBySupplier,
+  postSupplierCompta,
 };
