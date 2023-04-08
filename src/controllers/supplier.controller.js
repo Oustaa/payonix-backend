@@ -4,9 +4,16 @@ const Supplier = require("../models/supplier-sql");
 const SupplierCompta = require("../models/supplierCompta-sql");
 
 async function getSupplier(req, res) {
-  const supplier = await Supplier.findAll();
+  try {
+    const supplier = await Supplier.findAll();
 
-  return res.status(200).json(supplier);
+    return res.status(200).json(supplier);
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+      error: error,
+    });
+  }
 }
 
 async function postSupplier(req, res) {
@@ -18,21 +25,25 @@ async function postSupplier(req, res) {
       missing_field: ["s_name"],
     });
 
-  const supplier = await Supplier.findOne({
-    where: { s_name: supplierInfo.s_name },
-  });
-  if (supplier)
-    return res.json({
-      supplier,
-      error_message: `artisan with the name ${supplierInfo.s_name} already exists`,
-    });
   try {
+    const supplierWithName = await Supplier.findOne({
+      where: { s_name: supplierInfo.s_name },
+    });
+    if (supplierWithName)
+      return res.status(409).json({
+        item: supplier,
+        error_message: `artisan with the name ${supplierInfo.s_name} already exists`,
+      });
     const supplier = await Supplier.create(supplierInfo);
 
-    return res.status(201).json(supplier);
+    return res.status(201).json({
+      item: supplier,
+      message: "supplier was created successfully",
+    });
   } catch (error) {
     return res.status(500).json({
-      error_message: "supplier was not created",
+      error_message: "internale server error",
+      error: error,
     });
   }
 }
@@ -56,7 +67,10 @@ async function putSupplierInfo(req, res) {
     if (updatedSupplierCount[0] !== 0)
       return res.status(200).json(updatedSupplierCount);
   } catch (error) {
-    res.status(500).json({ error_message: "server error", error });
+    return res.status(500).json({
+      error_message: "internale server error",
+      error: error,
+    });
   }
 }
 
@@ -70,13 +84,17 @@ async function getSupplierCompta(req, res) {
     const supplierCompta = await sequelize.query(query, {
       type: sequelize.QueryTypes.SELECT,
     });
-    console.log(supplierCompta);
+
     return res.status(200).json(supplierCompta);
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+      error: error,
+    });
   }
 }
 
+// not tested yet
 async function getComptaBySupplier(req, res) {
   const { id } = req.params;
 
@@ -104,10 +122,14 @@ async function postSupplierCompta(req, res) {
   try {
     const supplierCompta = await SupplierCompta.create(supplierComptaInfo);
 
-    return res.status(201).json(supplierCompta);
+    return res.status(201).json({
+      item: supplierCompta,
+      message: `supplier compta was created successfully`,
+    });
   } catch (error) {
     return res.status(500).json({
-      error_message: "artisan compta was not created",
+      error_message: "internale server error",
+      error: error,
     });
   }
 }

@@ -4,6 +4,9 @@ const helmet = require("helmet");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const storeImage = require("./utils/storeImages");
+const readFile = require("./utils/readCSV");
+
+const sqlModule = require("./models/product-sql");
 
 const artisansRouter = require("./routes/artisans.routes");
 const supplierRouter = require("./routes/supplier.routes");
@@ -12,6 +15,8 @@ const rawMaterialsRouter = require("./routes/rawMat.routes");
 const authRouter = require("./routes/auth.routes");
 
 const app = express();
+
+console.log(process.env);
 
 app.use(
   cors({
@@ -26,8 +31,6 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.use((req, res, next) => {
   console.log(`url: ${req.url}, method: ${req.method}`);
-  console.log("cookies");
-  console.log(req.cookies);
   next();
 });
 
@@ -36,6 +39,21 @@ app.use("/api/artisans", artisansRouter);
 app.use("/api/suppliers", supplierRouter);
 app.use("/api/rawMaterials", rawMaterialsRouter);
 app.use("/api/auth", authRouter);
+
+app.post("/api/import", async (req, res) => {
+  const { filename } = req.query;
+
+  const filePath = path.join(__dirname, "data", filename);
+  const data = await readFile(filePath);
+  try {
+    data.forEach(async (data) => {
+      await sqlModule.create(data);
+    });
+  } catch (error) {
+    console.log(error);
+  }
+  res.json(data);
+});
 
 app.post("/upload", storeImage.single("file"), (req, res) => {
   console.log(req.file.path);

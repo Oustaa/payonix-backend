@@ -9,6 +9,7 @@ const Artisan = sequelize.define("Artisan", {
   a_name: {
     type: DataTypes.STRING,
     allowNull: false,
+    lowercase: true,
   },
   a_phone: {
     type: DataTypes.STRING,

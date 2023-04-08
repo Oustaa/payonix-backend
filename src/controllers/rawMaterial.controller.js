@@ -13,18 +13,19 @@ async function getRawMatBase(req, res) {
     return res.status(200).json(rawMatBases);
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
+      error_message: "internale server error",
+      error: error,
     });
   }
 }
 
 async function getRawMatInventory(req, res) {
   const query = `
-  SELECT rmi.*, a.a_name as a_name, rms.rms_unit_price as rmi_unit_price from RowMaterialInventories rmi
-  LEFT JOIN Artisans a 
-  on a.a_id = rmi.rmi_artisan_id
-  LEFT JOIN RowMaterialStocks rms
-  on rms.rms_id = rmi_raw_mat_stock_id
+    SELECT rmi.*, a.a_name as a_name, rms.rms_unit_price as rmi_unit_price from RowMaterialInventories rmi
+    LEFT JOIN Artisans a 
+    on a.a_id = rmi.rmi_artisan_id
+    LEFT JOIN RowMaterialStocks rms
+    on rms.rms_id = rmi_raw_mat_stock_id
   `;
   try {
     const rawMatInventorys = await sequelize.query(query, {
@@ -33,7 +34,8 @@ async function getRawMatInventory(req, res) {
     return res.status(200).json(rawMatInventorys);
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
+      error_message: "internale server error",
+      error: error,
     });
   }
 }
@@ -54,7 +56,8 @@ async function getRawMatStock(req, res) {
     return res.status(200).json(rawMatStocks);
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
+      error_message: "internale server error",
+      error: error,
     });
   }
 }
@@ -71,8 +74,8 @@ async function getRawMatType(req, res) {
     return res.status(200).json(rawMatTypes);
   } catch (error) {
     return res.status(500).json({
+      error_message: "internale server error",
       error: error,
-      error_message: "server error",
     });
   }
 }
@@ -91,9 +94,9 @@ async function postRawMatBase(req, res) {
       where: { rmb_name: rawMatBaseInfo.rmb_name.trim().toLowerCase() },
     });
     if (rawMatBaseWithName)
-      return res.status(201).json({
+      return res.status(409).json({
         item: rawMatBaseWithName,
-        message: "can't create raw material base with the same name",
+        error_message: "can't create raw material base with the same name",
       });
 
     const createdRawMatBase = await RawMatBase.create({
@@ -106,8 +109,8 @@ async function postRawMatBase(req, res) {
     });
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
-      error,
+      error_message: "internale server error",
+      error: error,
     });
   }
 }
@@ -125,8 +128,7 @@ async function postRawMatInventory(req, res) {
       ON RowMaterialTypes.rmt_raw_mat_base_type = RowMaterialBases.rmb_id
       WHERE RowMaterialStocks.rms_id = ? 
     `;
-  // !inventoryInfo.rmi_unit_price
-  // !inventoryInfo.rmi_unit_price && "rmi_unit_price",
+
   if (
     !inventoryInfo.rmi_quantity ||
     !inventoryInfo.rmi_artisan_id ||
@@ -141,29 +143,32 @@ async function postRawMatInventory(req, res) {
       ],
     });
 
-  const [{ rmt_name, rmb_name }] = await sequelize.query(query, {
-    type: sequelize.QueryTypes.SELECT,
-    replacements: [inventoryInfo.rmi_raw_mat_stock_id],
-  });
-
-  const rmi_id = `${data}-${artisan_name}-${rmb_name}-${rmt_name}`;
-
-  if (inventoryInfo.rmi_raw_mat_stock_id && inventoryInfo.rmi_quantity) {
-    const rms_up = await RawMatStock.findOne({
-      where: { rms_id: inventoryInfo.rmi_raw_mat_stock_id },
+  try {
+    const [{ rmt_name, rmb_name }] = await sequelize.query(query, {
+      type: sequelize.QueryTypes.SELECT,
+      replacements: [inventoryInfo.rmi_raw_mat_stock_id],
     });
 
-    var rmi_unit_price = rms_up.rms_unit_price;
-    var rmi_amount = rmi_unit_price * inventoryInfo.rmi_quantity;
+    const rmi_id = `${data}-${artisan_name}-${rmb_name}-${rmt_name}-${new Date()
+      .getTime()
+      .toString()
+      .substring(8)}`;
 
-    if (inventoryInfo.rmi_estimated_nbr_prod) {
-      inventoryInfo.rmi_rawMat_price_prod =
-        rmi_amount / inventoryInfo.rmi_estimated_nbr_prod;
-      inventoryInfo.rmi_rawMat_prod =
-        inventoryInfo.rmi_quantity / inventoryInfo.rmi_estimated_nbr_prod;
+    if (inventoryInfo.rmi_raw_mat_stock_id && inventoryInfo.rmi_quantity) {
+      const rms_up = await RawMatStock.findOne({
+        where: { rms_id: inventoryInfo.rmi_raw_mat_stock_id },
+      });
+
+      var rmi_unit_price = rms_up.rms_unit_price;
+      var rmi_amount = rmi_unit_price * inventoryInfo.rmi_quantity;
+
+      if (inventoryInfo.rmi_estimated_nbr_prod) {
+        inventoryInfo.rmi_rawMat_price_prod =
+          rmi_amount / inventoryInfo.rmi_estimated_nbr_prod;
+        inventoryInfo.rmi_rawMat_prod =
+          inventoryInfo.rmi_quantity / inventoryInfo.rmi_estimated_nbr_prod;
+      }
     }
-  }
-  try {
     const createdRawMatInventory = await RawMatInventory.create({
       ...inventoryInfo,
       rmi_unit_price,
@@ -176,9 +181,9 @@ async function postRawMatInventory(req, res) {
       message: "material inventory was created successfully",
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
-      error_message: "server error",
+      error_message: "internale server error",
+      error: error,
     });
   }
 }
@@ -248,6 +253,15 @@ async function postRawMatType(req, res) {
     });
 
   try {
+    const rawMatWithName = await RawMatType.findOne({
+      where: { rmt_name: rawMatTypeInfo.rmt_name },
+    });
+
+    if (rawMatWithName)
+      return res.status(409).json({
+        error_message: `can't create raw material type with the name: ${rawMatTypeInfo.rmt_name}`,
+      });
+
     const createdRawMatType = await RawMatType.create({
       ...rawMatTypeInfo,
       rmt_name: rawMatTypeInfo.rmt_name.toLowerCase(),
@@ -259,8 +273,8 @@ async function postRawMatType(req, res) {
     });
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
-      error,
+      error_message: "internale server error",
+      error: error,
     });
   }
 }
@@ -268,11 +282,9 @@ async function postRawMatType(req, res) {
 async function putEstematedNbrProd(req, res) {
   const { id } = req.params;
   const { rmi_estimated_nbr_prod } = req.body;
-  console.log("id: " + id);
-  console.log("rmi_estimated_nbr_pro:" + rmi_estimated_nbr_prod);
 
   if (!rmi_estimated_nbr_prod) {
-    return res.status(403).json({
+    return res.status(404).json({
       error_message:
         "please provide an estimation for the number of product by raw material",
     });
@@ -282,6 +294,15 @@ async function putEstematedNbrProd(req, res) {
     const prodInventory = await RowMaterialInventory.findOne({
       where: { rmi_id: id },
     });
+
+    const prodInventoryFound = await RowMaterialInventory.findOne({
+      where: { rmi_id: id },
+    });
+
+    if (!prodInventoryFound)
+      return res.status(404).json({
+        error_message: "no such raw material inventiry with the provided id",
+      });
 
     const rmi_rawMat_price_prod =
       prodInventory.rmi_amount / rmi_estimated_nbr_prod;
@@ -298,12 +319,12 @@ async function putEstematedNbrProd(req, res) {
 
     return res.status(201).json({
       item: updatedInventory,
-      message: "product image was updated successfully",
+      message: "estemated number of products updated",
     });
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
-      error,
+      error_message: "internale server error",
+      error: error,
     });
   }
 }

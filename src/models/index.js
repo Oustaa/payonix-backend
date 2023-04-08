@@ -14,7 +14,7 @@ const user = require("./user-sql");
 async function createTables(force = false) {
   await artisan.sync({ force });
   await artisanCompta.sync({ force });
-  await product.sync({ force });
+  await product.sync({ force: true });
   await productInventory.sync({ force });
   await productsVariety.sync({ force });
   await rawMatBase.sync({ force });

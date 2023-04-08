@@ -1,13 +1,17 @@
 const { sequelize } = require("../database/sql.connect");
 
-const Artisan = require("../models/artisan-sql");
+// const Artisan = require("../models/artisan-sql");
 const Artisans = require("../models/artisan-sql");
 const ArtisanCompta = require("../models/artisanCompta-sql");
 
 async function getArtisans(req, res) {
-  const artisan = await Artisans.findAll();
+  try {
+    const artisan = await Artisans.findAll();
 
-  return res.status(200).json(artisan);
+    return res.status(200).json(artisan);
+  } catch (error) {
+    res.status(500).json({ error_message: "internale server error" });
+  }
 }
 
 async function postArtisan(req, res) {
@@ -19,21 +23,25 @@ async function postArtisan(req, res) {
       missing_field: ["a_name"],
     });
 
-  const artisan = await Artisans.findOne({
-    where: { a_name: artisanInfo.a_name },
-  });
-  if (artisan)
-    return res.status(409).json({
-      artisan,
-      error_message: `artisan with the name ${artisanInfo.a_name} already exists`,
-    });
   try {
+    const artisanExists = await Artisans.findOne({
+      where: { a_name: artisanInfo.a_name },
+    });
+    if (artisanExists)
+      return res.status(409).json({
+        item: artisanExists,
+        error_message: `can't create artisan with the name "${artisanInfo.a_name}"`,
+      });
+
     const artisan = await Artisans.create(artisanInfo);
 
-    return res.status(201).json(artisan);
+    return res.status(201).json({
+      item: artisan,
+      message: `artisan with the name ${artisanInfo.a_name} was added successfuly`,
+    });
   } catch (error) {
     return res.status(500).json({
-      error_message: "artisan was not created",
+      error_message: "internale server error",
     });
   }
 }
@@ -42,30 +50,55 @@ async function putArtisanInfo(req, res) {
   const { id } = req.params;
   const artisanInfo = req.body;
 
-  const updatedArtisanCount = await Artisan.update(artisanInfo, {
-    where: {
-      a_id: id,
-    },
-  });
+  try {
+    const artisanWithName = await Artisans.findOne({ a_id: id });
+    if (!artisanWithName)
+      return res.status(404).json({
+        message_error: `there is no artisan with the provided id: ${id}`,
+      });
 
-  if (updatedArtisanCount[0] !== 0)
-    return res.status(200).json(updatedArtisanCount);
+    const updatedArtisanCount = await Artisans.update(artisanInfo, {
+      where: {
+        a_id: id,
+      },
+    });
+
+    if (updatedArtisanCount[0] !== 0)
+      return res.status(201).json({
+        message: "Artisan updated successfully",
+      });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
 }
 
 async function getArtisansCompta(req, res) {
+  let { limit, page } = req.query;
+  page = page ? page : 0;
+  const skip = limit * page - limit;
+
+  console.log(limit, skip);
+
   const query = `
-  SELECT ac.*, a.a_name FROM ArtisanCompta ac
-  LEFT JOIN Artisans a
-  on a.a_id = ac.ac_artisan_id
+    SELECT ac.*, a.a_name FROM ArtisanCompta ac
+    LEFT JOIN Artisans a
+    on a.a_id = ac.ac_artisan_id
+    order by ac.ac_date DESC
   `;
+  // limit ${limit} OFFSET ${skip}
   try {
     const artisanCompta = await sequelize.query(query, {
       type: sequelize.QueryTypes.SELECT,
     });
-    console.log(artisanCompta);
+
     return res.status(200).json(artisanCompta);
   } catch (err) {
     console.log(err);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
   }
 }
 
@@ -84,8 +117,6 @@ async function getComptaByArtisan(req, res) {
 async function postArtisanCompta(req, res) {
   const artisanComptaInfo = req.body;
 
-  console.log(artisanComptaInfo);
-
   if (!artisanComptaInfo.ac_amount || !artisanComptaInfo.ac_artisan_id)
     return res.status(400).json({
       error_message: `missing required field`,
@@ -98,10 +129,13 @@ async function postArtisanCompta(req, res) {
   try {
     const artisanCompta = await ArtisanCompta.create(artisanComptaInfo);
 
-    return res.status(201).json(artisanCompta);
+    return res.status(201).json({
+      item: artisanCompta,
+      message: "artisan's compta was created successefuly",
+    });
   } catch (error) {
     return res.status(500).json({
-      error_message: "artisan compta was not created",
+      error_message: "internale server error",
     });
   }
 }

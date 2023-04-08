@@ -5,19 +5,26 @@ const ProductInventory = require("../models/productInventory-sql");
 const ProductsVariety = require("../models/productsVariety-sql");
 
 async function getProducts(req, res) {
-  const products = await Product.findAll();
+  try {
+    const products = await Product.findAll();
 
-  return res.status(200).json(products);
+    return res.status(200).json(products);
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
 }
 
 async function getProductsInventory(req, res) {
   const query = `SELECT pi.*, a.a_name as vendor, pv.pv_name AS name, p.p_name as catigory FROM ProductInventories pi
-  left join Artisans a
-  on a.a_id = pi.pi_artisan_id
-  left join ProductVarieties pv
-  on pv.pv_id = pi.pi_prod_variant_id
-  left join Products p 
-  on p.p_id = pv.pv_product_id`;
+    left join Artisans a
+    on a.a_id = pi.pi_artisan_id
+    left join ProductVarieties pv
+    on pv.pv_id = pi.pi_prod_variant_id
+    left join Products p 
+    on p.p_id = pv.pv_product_id
+  `;
 
   try {
     const productsInventory = await sequelize.query(query, {
@@ -27,15 +34,21 @@ async function getProductsInventory(req, res) {
     return res.status(200).json(productsInventory);
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
+      error_message: "internale server error",
     });
   }
 }
 
 async function getProductsVariety(req, res) {
-  const productsVariety = await ProductsVariety.findAll();
+  try {
+    const productsVariety = await ProductsVariety.findAll();
 
-  return res.status(200).json(productsVariety);
+    return res.status(200).json(productsVariety);
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
 }
 
 async function postProduct(req, res, next) {
@@ -55,12 +68,12 @@ async function postProduct(req, res, next) {
       where: { p_name: productInfo.p_name.trim().toLowerCase() },
     });
     if (productWithName)
-      return res.status(300).json({
+      return res.status(209).json({
         item: productWithName,
         error_message: `can't create product with the same name: ${productInfo.p_name}`,
       });
 
-    const p_image = req?.file?.filename || "default image";
+    const p_image = req?.file?.filename || "";
 
     const createdProduct = await Product.create({
       p_name: productInfo.p_name.trim().toLowerCase(),
@@ -74,9 +87,7 @@ async function postProduct(req, res, next) {
     });
   } catch (error) {
     return res.status(500).json({
-      error_message:
-        "Sorry can't add product, Due to a server error try later please.",
-      error,
+      error_message: "internale server error",
     });
   }
 }
@@ -112,12 +123,11 @@ async function postProductInventory(req, res) {
 
     return res.status(201).json({
       item: createdProductInventory,
-      error_message: "product inventory was created successfully",
+      message: "product inventory was created successfully",
     });
   } catch (error) {
     return res.status(500).json({
-      error_message: "server error",
-      error,
+      error_message: "internale server error",
     });
   }
 }
@@ -142,7 +152,7 @@ async function postProductVariety(req, res) {
         error_message: `can't create a product variety with the same name: ${productVarietyInfo.pv_name}`,
       });
 
-    const pv_image = req?.file?.filename || "default";
+    const pv_image = req?.file?.filename || "";
 
     const createdProductVariety = await ProductsVariety.create({
       ...productVarietyInfo,
@@ -152,17 +162,16 @@ async function postProductVariety(req, res) {
 
     return res.status(201).json({
       item: createdProductVariety,
-      error_message: "product varirty was created successfully",
+      message: "product varirty was created successfully",
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
-      error_message: "server error",
-      error,
+      error_message: "internale server error",
     });
   }
 }
 
+// not tested yet
 async function putProductImage(req, res) {
   const { id } = req.params;
   const p_image = `http://localhost:8000/${req.file.filename}`;
@@ -183,7 +192,6 @@ async function putProductImage(req, res) {
     });
   }
 }
-
 async function putProductVariety(req, res) {
   const { id } = req.params;
   const { pv_description } = req.query;

@@ -34,7 +34,7 @@ async function logIn(req, res) {
     res.cookie("LogInToken", token, {
       maxAge: 43200,
       secure: true,
-      URL: "http://localhost:3000/",
+      path: "http://localhost:3000/",
     });
 
     res.status(200).json({ accessToken: token, username: user.u_name });
