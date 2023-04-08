@@ -4,7 +4,7 @@ const helmet = require("helmet");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const storeImage = require("./utils/storeImages");
-const readFile = require("./utils/readCSV");
+// const readFile = require("./utils/readCSV");
 
 const sqlModule = require("./models/product-sql");
 
@@ -40,20 +40,20 @@ app.use("/api/suppliers", supplierRouter);
 app.use("/api/rawMaterials", rawMaterialsRouter);
 app.use("/api/auth", authRouter);
 
-app.post("/api/import", async (req, res) => {
-  const { filename } = req.query;
+// app.post("/api/import", async (req, res) => {
+//   const { filename } = req.query;
 
-  const filePath = path.join(__dirname, "data", filename);
-  const data = await readFile(filePath);
-  try {
-    data.forEach(async (data) => {
-      await sqlModule.create(data);
-    });
-  } catch (error) {
-    console.log(error);
-  }
-  res.json(data);
-});
+//   const filePath = path.join(__dirname, "data", filename);
+//   const data = await readFile(filePath);
+//   try {
+//     data.forEach(async (data) => {
+//       await sqlModule.create(data);
+//     });
+//   } catch (error) {
+//     console.log(error);
+//   }
+//   res.json(data);
+// });
 
 app.post("/upload", storeImage.single("file"), (req, res) => {
   console.log(req.file.path);
