@@ -16,11 +16,9 @@ const authRouter = require("./routes/auth.routes");
 
 const app = express();
 
-console.log(process.env);
-
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: ["http://localhost:3000", "https://payonix.onrender.com"],
     credentials: true,
   })
 );
@@ -31,14 +29,15 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.use((req, res, next) => {
   console.log(`url: ${req.url}, method: ${req.method}`);
+  console.log(`cookies: ${JSON.stringify(req.cookies)}`);
   next();
 });
 
+app.use("/api/auth", authRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/artisans", artisansRouter);
 app.use("/api/suppliers", supplierRouter);
 app.use("/api/rawMaterials", rawMaterialsRouter);
-app.use("/api/auth", authRouter);
 
 // app.post("/api/import", async (req, res) => {
 //   const { filename } = req.query;

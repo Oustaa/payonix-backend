@@ -31,10 +31,11 @@ async function logIn(req, res) {
       { id: user.u_id, u_role: user.u_role, u_name: user.u_name },
       JWT_SECRET
     );
-    res.cookie("LogInToken", token, {
-      maxAge: 43200,
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 900000),
+      domain: "payonix.onrender.com/",
       secure: true,
-      path: "http://localhost:3000/",
+      httpOnly: true,
     });
 
     res.status(200).json({ accessToken: token, username: user.u_name });
@@ -82,10 +83,10 @@ async function signIn(req, res) {
 }
 
 function isLoggedIn(req, res) {
-  console.log("req.cookies", JSON.stringify(req.cookies));
   const token = req.cookies.access_token || req.headers["authorization"];
 
   jwt.verify(token, JWT_SECRET, function (err, user) {
+    console.log("hdkljhdkhfdslkg");
     if (err || !user) {
       return res
         .status(401)
