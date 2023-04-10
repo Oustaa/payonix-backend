@@ -79,8 +79,6 @@ async function getArtisansCompta(req, res) {
   page = page ? page : 0;
   const skip = limit * page - limit;
 
-  console.log(limit, skip);
-
   const query = `
     SELECT ac.*, a.a_name FROM ArtisanCompta ac
     LEFT JOIN Artisans a
@@ -95,7 +93,6 @@ async function getArtisansCompta(req, res) {
 
     return res.status(200).json(artisanCompta);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({
       error_message: "internale server error",
     });

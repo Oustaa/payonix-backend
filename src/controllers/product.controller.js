@@ -8,8 +8,6 @@ async function getProductsCategories(req, res) {
   try {
     const categories = await ProductsCategories.findAll();
 
-    console.log(categories);
-
     return res.status(200).json(categories);
   } catch (error) {
     return res.status(500).json({
@@ -54,7 +52,6 @@ async function getProducts(req, res) {
 
     return res.status(200).json(products);
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       error_message: "internale server error",
     });
@@ -137,7 +134,7 @@ async function postProductInventory(req, res) {
 
 async function postProduct(req, res) {
   const productInfo = req.query;
-  console.log(req.body);
+
   if (!productInfo.p_name || !productInfo.p_category)
     return res.status(400).json({
       error_message: "missing required fields",
@@ -202,8 +199,6 @@ async function putProductImage(req, res) {
 async function putProductVariety(req, res) {
   const { id } = req.params;
   const { p_description } = req.query;
-
-  console.log("id :", id);
 
   const info = {};
   if (req.file) info.p_image = `http://localhost:8000/${req.file.filename}`;

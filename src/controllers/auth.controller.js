@@ -86,14 +86,15 @@ function isLoggedIn(req, res) {
   const token = req.cookies.access_token || req.headers["authorization"];
 
   jwt.verify(token, JWT_SECRET, function (err, user) {
-    console.log("hdkljhdkhfdslkg");
     if (err || !user) {
       return res
         .status(401)
         .json({ isLoggedIn: false, error_message: "you must be logged in" });
     }
 
-    return res.status(200).json({ isLoggedIn: true, username: user.u_name });
+    return res
+      .status(200)
+      .json({ isLoggedIn: true, username: user.u_name, token });
   });
 }
 
