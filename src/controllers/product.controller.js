@@ -1,14 +1,16 @@
 const { sequelize } = require("../database/sql.connect");
 
-const Product = require("../models/product-sql");
+const Product = require("../models/products-sql");
 const ProductInventory = require("../models/productInventory-sql");
-const ProductsVariety = require("../models/productsVariety-sql");
+const ProductsCategories = require("../models/productCategory-sql");
 
-async function getProducts(req, res) {
+async function getProductsCategories(req, res) {
   try {
-    const products = await Product.findAll();
+    const categories = await ProductsCategories.findAll();
 
-    return res.status(200).json(products);
+    console.log(categories);
+
+    return res.status(200).json(categories);
   } catch (error) {
     return res.status(500).json({
       error_message: "internale server error",
@@ -17,14 +19,14 @@ async function getProducts(req, res) {
 }
 
 async function getProductsInventory(req, res) {
-  const query = `SELECT pi.*, a.a_name as vendor, pv.pv_name AS name, p.p_name as catigory FROM ProductInventories pi
-    left join Artisans a
-    on a.a_id = pi.pi_artisan_id
-    left join ProductVarieties pv
-    on pv.pv_id = pi.pi_prod_variant_id
-    left join Products p 
-    on p.p_id = pv.pv_product_id
-  `;
+  const query = ` SELECT pi.*, a.a_name as vendor, p.p_name AS name, pc.pc_name as catigory FROM ProductInventories pi
+        left join Artisans a
+        on a.a_id = pi.pi_artisan_id
+        left join Products p
+        on p.p_id = pi.pi_prod_id
+        left join ProductCategories pc 
+        on pc.pc_id = p.p_category
+        `;
 
   try {
     const productsInventory = await sequelize.query(query, {
@@ -39,51 +41,52 @@ async function getProductsInventory(req, res) {
   }
 }
 
-async function getProductsVariety(req, res) {
+async function getProducts(req, res) {
+  const query = `
+      SELECT p.*, pc.pc_name as p_category_name from Products p
+      LEFT JOIN ProductCategories pc
+      on pc.pc_id = p.p_category
+    `;
   try {
-    const productsVariety = await ProductsVariety.findAll();
+    const products = await sequelize.query(query, {
+      type: sequelize.QueryTypes.SELECT,
+    });
 
-    return res.status(200).json(productsVariety);
+    return res.status(200).json(products);
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       error_message: "internale server error",
     });
   }
 }
 
-async function postProduct(req, res, next) {
-  const productInfo = req.query;
+async function postProductCategory(req, res, next) {
+  const productCategoryInfo = req.query;
 
-  if (!productInfo.p_raw_mat_base_id || !productInfo.p_name)
+  if (!productCategoryInfo.pc_name)
     return res.status(400).json({
       error_message: "missing required fields",
-      missing_field: [
-        !productInfo.p_raw_mat_base_id && "p_raw_mat_base_id",
-        !productInfo.p_name && "p_name",
-      ],
+      missing_field: [!productCategoryInfo.pc_name && "pc_name"],
     });
 
   try {
-    const productWithName = await Product.findOne({
-      where: { p_name: productInfo.p_name.trim().toLowerCase() },
+    const productWithName = await ProductsCategories.findOne({
+      where: { pc_name: productCategoryInfo.pc_name.trim().toLowerCase() },
     });
     if (productWithName)
-      return res.status(209).json({
+      return res.status(409).json({
         item: productWithName,
-        error_message: `can't create product with the same name: ${productInfo.p_name}`,
+        error_message: `can't create category with the same name: ${productCategoryInfo.pc_name}`,
       });
 
-    const p_image = req?.file?.filename || "";
-
-    const createdProduct = await Product.create({
-      p_name: productInfo.p_name.trim().toLowerCase(),
-      p_raw_mat_base_id: productInfo.p_raw_mat_base_id,
-      p_image,
+    const createdCategory = await ProductsCategories.create({
+      pc_name: productCategoryInfo.pc_name.trim().toLowerCase(),
     });
 
     return res.status(201).json({
-      item: createdProduct,
-      message: "product was created successfully",
+      item: createdCategory,
+      message: "Category was created successfully",
     });
   } catch (error) {
     return res.status(500).json({
@@ -99,7 +102,7 @@ async function postProductInventory(req, res) {
     !productInventoryInfo.pi_artisan_id ||
     !productInventoryInfo.pi_quantity ||
     !productInventoryInfo.pi_unit_price ||
-    !productInventoryInfo.pi_prod_variant_id ||
+    !productInventoryInfo.pi_prod_id ||
     !productInventoryInfo.pi_raw_mat_inv_id
   )
     return res.status(400).json({
@@ -107,7 +110,7 @@ async function postProductInventory(req, res) {
       missing_field: [
         !productInventoryInfo.pi_quantity && "pi_quantity",
         !productInventoryInfo.pi_unit_price && "pi_unit_price",
-        !productInventoryInfo.pi_prod_variant_id && "pi_prod_variant_id",
+        !productInventoryInfo.pi_prod_id && "pi_prod_id",
         !productInventoryInfo.pi_raw_mat_inv_id && "pi_raw_mat_inv_id",
         !productInventoryInfo.pi_artisan_id && "pi_artisan_id",
       ],
@@ -132,32 +135,35 @@ async function postProductInventory(req, res) {
   }
 }
 
-async function postProductVariety(req, res) {
-  const productVarietyInfo = req.query;
-
-  if (!productVarietyInfo.pv_name)
+async function postProduct(req, res) {
+  const productInfo = req.query;
+  console.log(req.body);
+  if (!productInfo.p_name || !productInfo.p_category)
     return res.status(400).json({
       error_message: "missing required fields",
-      missing_field: [!productVarietyInfo.pv_name && "pv_name"],
+      missing_field: [
+        !productInfo.p_name && "p_name",
+        !productInfo.p_category && "p_category",
+      ],
     });
 
   try {
-    const productVarietyWithName = await ProductsVariety.findOne({
-      where: { pv_name: productVarietyInfo.pv_name.trim().toLowerCase() },
+    const productWithName = await Product.findOne({
+      where: { p_name: productInfo.p_name.trim().toLowerCase() },
     });
 
-    if (productVarietyWithName)
+    if (productWithName)
       return res.status(409).json({
-        item: productVarietyWithName,
-        error_message: `can't create a product variety with the same name: ${productVarietyInfo.pv_name}`,
+        item: productWithName,
+        error_message: `can't create a product with the same name: ${productInfo.p_name}`,
       });
 
-    const pv_image = req?.file?.filename || "";
+    const p_image = req?.file?.filename || "";
 
-    const createdProductVariety = await ProductsVariety.create({
-      ...productVarietyInfo,
-      pv_name: productVarietyInfo.pv_name.trim().toLowerCase(),
-      pv_image,
+    const createdProductVariety = await Product.create({
+      ...productInfo,
+      p_name: productInfo.p_name.trim().toLowerCase(),
+      p_image,
     });
 
     return res.status(201).json({
@@ -192,19 +198,20 @@ async function putProductImage(req, res) {
     });
   }
 }
+
 async function putProductVariety(req, res) {
   const { id } = req.params;
-  const { pv_description } = req.query;
+  const { p_description } = req.query;
 
   console.log("id :", id);
 
   const info = {};
-  if (req.file) info.pv_image = `http://localhost:8000/${req.file.filename}`;
-  if (pv_description) info.pv_description = pv_description;
+  if (req.file) info.p_image = `http://localhost:8000/${req.file.filename}`;
+  if (p_description) info.p_description = p_description;
 
   const updatedProductVariety = await ProductsVariety.update(info, {
     where: {
-      pv_id: id,
+      p_id: id,
     },
   });
 
@@ -216,12 +223,12 @@ async function putProductVariety(req, res) {
 }
 
 module.exports = {
-  getProducts,
+  getProductsCategories,
   getProductsInventory,
-  getProductsVariety,
+  getProducts,
+  postProductCategory,
   postProduct,
   postProductInventory,
-  postProductVariety,
   putProductImage,
   putProductVariety,
 };

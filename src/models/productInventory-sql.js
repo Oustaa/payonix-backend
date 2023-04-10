@@ -29,7 +29,7 @@ const ProductInventory = sequelize.define("ProductInventory", {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  pi_prod_variant_id: {
+  pi_prod_id: {
     type: DataTypes.STRING,
   },
 });

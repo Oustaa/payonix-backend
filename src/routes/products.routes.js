@@ -8,26 +8,24 @@ const { errorHandler } = require("../middlewares/errorHandler");
 const {
   getProducts,
   getProductsInventory,
-  getProductsVariety,
+  getProductsCategories,
   postProduct,
   postProductInventory,
-  postProductVariety,
-  putProductImage,
+  postProductCategory,
   putProductVariety,
 } = require("../controllers/product.controller");
 
 // /products
 router.get("/", authorization, getProducts);
 router.post("/", authorization, storeImage, errorHandler, postProduct);
-router.put("/:id", authorization, storeImage, errorHandler, putProductImage);
 
 // /products/inventory
 router.get("/inventory", authorization, getProductsInventory);
 router.post("/inventory", authorization, postProductInventory);
 
 // /products/variety
-router.get("/variety", authorization, getProductsVariety);
-router.post("/variety", authorization, storeImage, postProductVariety);
+router.get("/category", authorization, getProductsCategories);
+router.post("/category", authorization, postProductCategory);
 router.put(
   "/variety/:id",
   authorization,

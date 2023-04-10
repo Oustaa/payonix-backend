@@ -1,39 +1,39 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../database/sql.connect");
 
-const ProductVariety = sequelize.define("ProductVariety", {
-  pv_id: {
+const Product = sequelize.define("Product", {
+  p_id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
   },
-  pv_name: {
+  p_name: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
   },
-  pv_description: {
+  p_description: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  pv_image: {
+  p_image: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  pv_reorder_point: {
+  p_category: {
+    type: DataTypes.STRING,
+  },
+  p_reorder_point: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  pv_availibility: {
+  p_availibility: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  pv_command_lanched: {
+  p_command_lanched: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  pv_product_id: {
-    type: DataTypes.STRING,
-  },
 });
 
-module.exports = ProductVariety;
+module.exports = Product;

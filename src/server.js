@@ -9,7 +9,7 @@ const cookieParser = require("cookie-parser");
 const storeImage = require("./utils/storeImages");
 // const readFile = require("./utils/readCSV");
 
-const sqlModule = require("./models/product-sql");
+const sqlModule = require("./models/productCategory-sql");
 
 const artisansRouter = require("./routes/artisans.routes");
 const supplierRouter = require("./routes/supplier.routes");
@@ -19,22 +19,26 @@ const authRouter = require("./routes/auth.routes");
 
 const app = express();
 
-app.use(
-  cors({
-    origin: ["http://localhost:3000", "https://payonix.onrender.com"],
-    credentials: true,
-  })
-);
-app.use(helmet());
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "..", "public")));
-
 app.use((req, res, next) => {
   console.log(`url: ${req.url}, method: ${req.method}`);
   console.log(`cookies: ${JSON.stringify(req.cookies)}`);
   next();
 });
+
+app.set("trust proxy", 1);
+
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "https://payonix.onrender.com"],
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
+
+app.use(helmet());
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.use("/api/auth", authRouter);
 app.use("/api/products", productsRouter);

@@ -1,8 +1,8 @@
 const artisan = require("./artisan-sql");
 const artisanCompta = require("./artisanCompta-sql");
-const product = require("./product-sql");
+const productCategory = require("./productCategory-sql");
 const productInventory = require("./productInventory-sql");
-const productsVariety = require("./productsVariety-sql");
+const products = require("./products-sql");
 const rawMatBase = require("./rawMatBase-sql");
 const rawMatInventory = require("./rawMatInventory-sql");
 const rawMatStock = require("./rawMatStock-sql");
@@ -14,9 +14,9 @@ const user = require("./user-sql");
 async function createTables(force = false) {
   await artisan.sync({ force });
   await artisanCompta.sync({ force });
-  await product.sync({ force: true });
+  await productCategory.sync({ force });
   await productInventory.sync({ force });
-  await productsVariety.sync({ force });
+  await products.sync({ force });
   await rawMatBase.sync({ force });
   await rawMatType.sync({ force });
   await rawMatInventory.sync({ force });
