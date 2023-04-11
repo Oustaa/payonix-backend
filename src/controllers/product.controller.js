@@ -99,8 +99,7 @@ async function postProductInventory(req, res) {
     !productInventoryInfo.pi_artisan_id ||
     !productInventoryInfo.pi_quantity ||
     !productInventoryInfo.pi_unit_price ||
-    !productInventoryInfo.pi_prod_id ||
-    !productInventoryInfo.pi_raw_mat_inv_id
+    !productInventoryInfo.pi_prod_id
   )
     return res.status(400).json({
       error_message: "missing required fields",
@@ -108,7 +107,6 @@ async function postProductInventory(req, res) {
         !productInventoryInfo.pi_quantity && "pi_quantity",
         !productInventoryInfo.pi_unit_price && "pi_unit_price",
         !productInventoryInfo.pi_prod_id && "pi_prod_id",
-        !productInventoryInfo.pi_raw_mat_inv_id && "pi_raw_mat_inv_id",
         !productInventoryInfo.pi_artisan_id && "pi_artisan_id",
       ],
     });
@@ -126,6 +124,7 @@ async function postProductInventory(req, res) {
       message: "product inventory was created successfully",
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       error_message: "internale server error",
     });
@@ -217,6 +216,64 @@ async function putProductVariety(req, res) {
   });
 }
 
+async function deleteProduct(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No product ID have been provided" });
+
+  try {
+    const deletedProductCount = await Product.destroy({
+      where: { p_id: id },
+    });
+    // check if deleting count is 1
+    if (deletedProductCount >= 1)
+      return res.status(200).json({
+        message: `product with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedProductCount,
+      });
+    return res.status(400).json({
+      error_message: `product with the ID: ${id} was not deleted.`,
+      deletionCount: deletedProductCount,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+async function deleteProductCategory(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No product ID have been provided" });
+
+  try {
+    const deletedProductCount = await ProductsCategories.destroy({
+      where: { pc_id: id },
+    });
+
+    if (deletedProductCount >= 1)
+      return res.status(200).json({
+        message: `product category with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedProductCount,
+      });
+    return res.status(400).json({
+      error_message: `product category with the ID: ${id} was not deleted.`,
+      deletionCount: deletedProductCount,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
 module.exports = {
   getProductsCategories,
   getProductsInventory,
@@ -226,4 +283,6 @@ module.exports = {
   postProductInventory,
   putProductImage,
   putProductVariety,
+  deleteProduct,
+  deleteProductCategory,
 };

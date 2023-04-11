@@ -15,6 +15,7 @@ const artisansRouter = require("./routes/artisans.routes");
 const supplierRouter = require("./routes/supplier.routes");
 const productsRouter = require("./routes/products.routes");
 const rawMaterialsRouter = require("./routes/rawMat.routes");
+const usersRouter = require("./routes/users.routes");
 const authRouter = require("./routes/auth.routes");
 
 const app = express();
@@ -45,6 +46,7 @@ app.use("/api/products", productsRouter);
 app.use("/api/artisans", artisansRouter);
 app.use("/api/suppliers", supplierRouter);
 app.use("/api/rawMaterials", rawMaterialsRouter);
+app.use("/api/users", usersRouter);
 
 const PORT = 8000;
 

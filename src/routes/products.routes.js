@@ -13,25 +13,23 @@ const {
   postProductInventory,
   postProductCategory,
   putProductVariety,
+  deleteProduct,
+  deleteProductCategory,
 } = require("../controllers/product.controller");
 
 // /products
 router.get("/", authorization, getProducts);
 router.post("/", authorization, storeImage, errorHandler, postProduct);
+router.delete("/:id", authorization, errorHandler, deleteProduct);
 
 // /products/inventory
 router.get("/inventory", authorization, getProductsInventory);
 router.post("/inventory", authorization, postProductInventory);
 
-// /products/variety
+// /products/category
 router.get("/category", authorization, getProductsCategories);
 router.post("/category", authorization, postProductCategory);
-router.put(
-  "/variety/:id",
-  authorization,
-  storeImage,
-  errorHandler,
-  putProductVariety
-);
+router.delete("/category/:id", authorization, deleteProductCategory);
+router.put("/category/:id", authorization, errorHandler, putProductVariety);
 
 module.exports = router;
