@@ -31,6 +31,7 @@ async function logIn(req, res) {
       { id: user.u_id, u_role: user.u_role, u_name: user.u_name },
       JWT_SECRET
     );
+
     res.cookie("token", token, {
       expires: new Date(Date.now() + 900000),
       domain: "payonix.onrender.com/",
@@ -38,7 +39,9 @@ async function logIn(req, res) {
       httpOnly: true,
     });
 
-    res.status(200).json({ accessToken: token, username: user.u_name });
+    res
+      .status(200)
+      .json({ accessToken: token, username: user.u_name, role: user.u_role });
   } catch (err) {
     res.status(500).json({ message_error: err.message, err });
   }
@@ -94,7 +97,12 @@ function isLoggedIn(req, res) {
 
     return res
       .status(200)
-      .json({ isLoggedIn: true, username: user.u_name, token });
+      .json({
+        isLoggedIn: true,
+        username: user.u_name,
+        token,
+        role: user.u_role,
+      });
   });
 }
 

@@ -1,4 +1,5 @@
 const User = require("../models/user-sql");
+const bcrypt = require("bcrypt");
 
 async function getUsers(req, res) {
   if (req.user?.u_role !== "admin")
@@ -19,4 +20,59 @@ async function getUsers(req, res) {
   }
 }
 
-module.exports = { getUsers };
+async function createUser(req, res) {
+  const userInfo = req.body;
+
+  if (req.user?.u_role !== "admin")
+    return res
+      .status(403)
+      .json({ error_message: "must be logged in as admin" });
+
+  if (
+    !userInfo.u_name ||
+    !userInfo.u_email ||
+    !userInfo.u_password ||
+    !userInfo.u_role
+  )
+    return res.status(400).json({
+      error_message: `missing required field`,
+      missing_field: [
+        !userInfo.u_name && "u_name",
+        !userInfo.u_email && "u_email",
+        !userInfo.u_password && "u_password",
+        !userInfo.u_role && "u_role",
+      ],
+    });
+
+  const hashPassword = await bcrypt.hash(req.body.u_password, 10);
+
+  try {
+    const user = await User.findOne({ where: { u_email: req.body.u_email } });
+
+    if (user) {
+      return res.status(409).json({
+        u_email: 1,
+        error_message: "can't create an account with the provided email.",
+      });
+    }
+
+    const savedUser = await User.create({
+      ...userInfo,
+      u_password: hashPassword,
+    });
+    return res.status(201).json(savedUser);
+  } catch (err) {
+    if (err.code === 11000)
+      return res.status(300).json({
+        existed_account: 1,
+        error_message: `account already exists, try logging in`,
+      });
+    else if (err.name === "ValidationError") {
+      return res.status(400).json({
+        error_message: `missing required fields`,
+      });
+    } else return res.status(500).json(err);
+  }
+}
+
+module.exports = { getUsers, createUser };
