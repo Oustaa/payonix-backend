@@ -36,10 +36,15 @@ app.use(
   })
 );
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
+
 app.use(cookieParser());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "..", "public")));
+app.use("/api", express.static(path.join(__dirname, "..", "public")));
 
 app.use("/api/auth", authRouter);
 app.use("/api/products", productsRouter);
