@@ -75,4 +75,35 @@ async function createUser(req, res) {
   }
 }
 
-module.exports = { getUsers, createUser };
+async function deleteUser(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No user ID have been provided" });
+
+  try {
+    const deletedCount = await User.destroy({
+      where: { u_id: id },
+    });
+
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `User with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `User with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+module.exports = { getUsers, createUser, deleteUser };

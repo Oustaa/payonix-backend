@@ -7,15 +7,18 @@ const {
   postSupplier,
   putSupplierInfo,
   getSupplierCompta,
-  getComptaBySupplier,
   postSupplierCompta,
+  deleteSupplier,
+  deleteSupplierCompta,
 } = require("../controllers/supplier.controller");
 
 router.get("/", authorization, getSupplier);
 router.post("/", authorization, postSupplier);
 router.put("/:id", authorization, putSupplierInfo);
+router.delete("/:id", authorization, deleteSupplier);
+
 router.get("/comptas", authorization, getSupplierCompta);
-router.get("/:id/compta", authorization, getComptaBySupplier);
 router.post("/comptas", authorization, postSupplierCompta);
+router.delete("/comptas/:id", authorization, deleteSupplierCompta);
 
 module.exports = router;

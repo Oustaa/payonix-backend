@@ -4,7 +4,7 @@ const RawMatBase = require("../models/rawMatBase-sql");
 const RawMatType = require("../models/rawMatType-sql");
 const RawMatStock = require("../models/rawMatStock-sql");
 const RawMatInventory = require("../models/rawMatInventory-sql");
-const RowMaterialInventory = require("../models/rawMatInventory-sql");
+const ProductInventory = require("../models/productInventory-sql");
 
 async function getRawMatBase(req, res) {
   try {
@@ -291,11 +291,11 @@ async function putEstematedNbrProd(req, res) {
   }
 
   try {
-    const prodInventory = await RowMaterialInventory.findOne({
+    const prodInventory = await RawMatInventory.findOne({
       where: { rmi_id: id },
     });
 
-    const prodInventoryFound = await RowMaterialInventory.findOne({
+    const prodInventoryFound = await RawMatInventory.findOne({
       where: { rmi_id: id },
     });
 
@@ -308,7 +308,7 @@ async function putEstematedNbrProd(req, res) {
       prodInventory.rmi_amount / rmi_estimated_nbr_prod;
     const rmi_rawMat_prod = prodInventory.rmi_quantity / rmi_estimated_nbr_prod;
 
-    const updatedInventory = await RowMaterialInventory.update(
+    const updatedInventory = await RawMatInventory.update(
       { rmi_estimated_nbr_prod, rmi_rawMat_price_prod, rmi_rawMat_prod },
       {
         where: {
@@ -329,6 +329,163 @@ async function putEstematedNbrProd(req, res) {
   }
 }
 
+async function deleteRawMatBase(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No Material ID have been provided" });
+
+  try {
+    const conflect = await RawMatType.findAll({
+      where: { rmt_raw_mat_base_type: id },
+    });
+    if (conflect && conflect.length !== 0) {
+      return res.status(406).json({
+        error_message: `raw material can't be deleted. it has ${conflect.length} instanse in the Raw Material type Table.`,
+      });
+    }
+
+    const deletedCount = await RawMatBase.destroy({
+      where: { rmb_id: id },
+    });
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `raw material base with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `raw material base with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+async function deleteRawMatType(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No Material type ID have been provided" });
+
+  try {
+    const conflect = await RawMatStock.findAll({
+      where: { rms_raw_mat_id: id },
+    });
+    if (conflect && conflect.length !== 0) {
+      return res.status(406).json({
+        error_message: `raw material type can't be deleted. it has ${conflect.length} instanse in the Raw Material stock Table.`,
+      });
+    }
+
+    const deletedCount = await RawMatType.destroy({
+      where: { rmt_id: id },
+    });
+
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `raw material base with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `raw material base with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+async function deleteRawMatInventory(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No Material ID have been provided" });
+
+  try {
+    const conflect = await ProductInventory.findAll({
+      where: { pi_raw_mat_inv_id: id },
+    });
+    if (conflect && conflect.length !== 0) {
+      return res.status(406).json({
+        error_message: `raw material inventory can't be deleted. it has ${conflect.length} instanse in the product inventory Table.`,
+      });
+    }
+
+    const deletedCount = await RawMatInventory.destroy({
+      where: { rmi_id: id },
+    });
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `raw material inventory with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `raw material inventory with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+async function deleteRawMatStock(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No Material stock ID have been provided" });
+
+  try {
+    const conflect = await RawMatInventory.findAll({
+      where: { rmi_raw_mat_stock_id: id },
+    });
+    if (conflect && conflect.length !== 0) {
+      return res.status(406).json({
+        error_message: `raw material stock can't be deleted. it has ${conflect.length} instanse in the Raw Material Inventory Table.`,
+      });
+    }
+
+    const deletedCount = await RawMatStock.destroy({
+      where: { rms_id: id },
+    });
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `raw material stock with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `raw material stock with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
 module.exports = {
   getRawMatBase,
   getRawMatInventory,
@@ -339,4 +496,8 @@ module.exports = {
   postRawMatStock,
   postRawMatType,
   putEstematedNbrProd,
+  deleteRawMatBase,
+  deleteRawMatType,
+  deleteRawMatInventory,
+  deleteRawMatStock,
 };

@@ -15,6 +15,7 @@ const {
   putProductVariety,
   deleteProduct,
   deleteProductCategory,
+  deleteProductInventory,
 } = require("../controllers/product.controller");
 
 // /products
@@ -25,6 +26,7 @@ router.delete("/:id", authorization, errorHandler, deleteProduct);
 // /products/inventory
 router.get("/inventory", authorization, getProductsInventory);
 router.post("/inventory", authorization, postProductInventory);
+router.delete("/inventory/:id", authorization, deleteProductInventory);
 
 // /products/category
 router.get("/category", authorization, getProductsCategories);

@@ -32,7 +32,7 @@ async function postSupplier(req, res) {
     if (supplierWithName)
       return res.status(409).json({
         item: supplier,
-        error_message: `artisan with the name ${supplierInfo.s_name} already exists`,
+        error_message: `supplier with the name ${supplierInfo.s_name} already exists`,
       });
     const supplier = await Supplier.create(supplierInfo);
 
@@ -94,19 +94,6 @@ async function getSupplierCompta(req, res) {
   }
 }
 
-// not tested yet
-async function getComptaBySupplier(req, res) {
-  const { id } = req.params;
-
-  const supplierCompta = await SupplierCompta.findAll({
-    where: {
-      sc_supplier_id: id,
-    },
-  });
-
-  return res.status(200).json(supplierCompta);
-}
-
 async function postSupplierCompta(req, res) {
   const supplierComptaInfo = req.body;
 
@@ -134,11 +121,84 @@ async function postSupplierCompta(req, res) {
   }
 }
 
+async function deleteSupplier(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No supplier ID have been provided" });
+
+  try {
+    const conflect = await SupplierCompta.findAll({
+      where: { sc_supplier_id: id },
+    });
+
+    if (conflect && conflect.length !== 0) {
+      return res.status(406).json({
+        error_message: `supplier can't be deleted. it has ${conflect.length} instanse in the suppliers compta.`,
+      });
+    }
+
+    const deletedCount = await Supplier.destroy({
+      where: { s_id: id },
+    });
+
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `Supplier with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `Supplier with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+async function deleteSupplierCompta(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No supplier compta ID have been provided" });
+
+  try {
+    const deletedCount = await SupplierCompta.destroy({
+      where: { sc_id: id },
+    });
+
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `Supplier compta with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `Supplier compta with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
 module.exports = {
   getSupplier,
   postSupplier,
   putSupplierInfo,
   getSupplierCompta,
-  getComptaBySupplier,
   postSupplierCompta,
+  deleteSupplier,
+  deleteSupplierCompta,
 };

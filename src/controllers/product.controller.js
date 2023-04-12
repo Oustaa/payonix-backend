@@ -225,6 +225,15 @@ async function deleteProduct(req, res) {
       .json({ error_message: "No product ID have been provided" });
 
   try {
+    const conflect = await ProductInventory.findAll({
+      where: { pi_prod_id: id },
+    });
+    if (conflect && conflect.length !== 0) {
+      return res.status(406).json({
+        error_message: `product can't be deleted. it has ${conflect.length} instanse in the Products Inventory Table.`,
+      });
+    }
+
     const deletedProductCount = await Product.destroy({
       where: { p_id: id },
     });
@@ -239,6 +248,7 @@ async function deleteProduct(req, res) {
       deletionCount: deletedProductCount,
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       error_message: "internale server error",
     });
@@ -254,6 +264,14 @@ async function deleteProductCategory(req, res) {
       .json({ error_message: "No product ID have been provided" });
 
   try {
+    const conflect = await Product.findAll({ where: { p_category: id } });
+
+    if (conflect && conflect.length !== 0) {
+      return res.status(406).json({
+        error_message: `product category can't be deleted. it has ${conflect.length} instanse in the Products Table.`,
+      });
+    }
+
     const deletedProductCount = await ProductsCategories.destroy({
       where: { pc_id: id },
     });
@@ -274,6 +292,35 @@ async function deleteProductCategory(req, res) {
   }
 }
 
+async function deleteProductInventory(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No product ID have been provided" });
+
+  try {
+    const deletedProductCount = await ProductInventory.destroy({
+      where: { pi_id: id },
+    });
+
+    if (deletedProductCount >= 1)
+      return res.status(200).json({
+        message: `product inventory with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedProductCount,
+      });
+    return res.status(400).json({
+      error_message: `product inventory with the ID: ${id} was not deleted.`,
+      deletionCount: deletedProductCount,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
 module.exports = {
   getProductsCategories,
   getProductsInventory,
@@ -285,4 +332,5 @@ module.exports = {
   putProductVariety,
   deleteProduct,
   deleteProductCategory,
+  deleteProductInventory,
 };

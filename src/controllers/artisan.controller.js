@@ -3,6 +3,8 @@ const { sequelize } = require("../database/sql.connect");
 // const Artisan = require("../models/artisan-sql");
 const Artisans = require("../models/artisan-sql");
 const ArtisanCompta = require("../models/artisanCompta-sql");
+const ProductInventory = require("../models/productInventory-sql");
+const RawMatInventory = require("../models/rawMatInventory-sql");
 
 async function getArtisans(req, res) {
   try {
@@ -137,6 +139,79 @@ async function postArtisanCompta(req, res) {
   }
 }
 
+async function deleteArtisan(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No artisan ID have been provided" });
+
+  try {
+    const conflect = [
+      ...(await ArtisanCompta.findAll({ where: { ac_artisan_id: id } })),
+      ...(await ProductInventory.findAll({ where: { pi_artisan_id: id } })),
+      ...(await RawMatInventory.findAll({ where: { rmi_artisan_id: id } })),
+    ];
+    if (conflect && conflect.length !== 0) {
+      return res.status(406).json({
+        error_message: `artisan can't be deleted. it has ${conflect.length} instanse in the artisans compta, (and/or) product inventory, (and/or) raw material inventory Table.`,
+      });
+    }
+
+    const deletedCount = await Artisans.destroy({
+      where: { a_id: id },
+    });
+
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `Artisan with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `Artisan with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+async function deleteArtisanCompta(req, res) {
+  const { id } = req.params;
+
+  if (!id)
+    return res
+      .status(204)
+      .json({ error_message: "No artisan compta ID have been provided" });
+
+  try {
+    const deletedCount = await ArtisanCompta.destroy({
+      where: { ac_id: id },
+    });
+
+    // check if deleting count is 1
+    if (deletedCount >= 1)
+      return res.status(200).json({
+        message: `Artisan compta with the ID: ${id} was deleted successfuly`,
+        deletionCount: deletedCount,
+      });
+    return res.status(400).json({
+      error_message: `Artisan compta with the ID: ${id} was not deleted.`,
+      deletionCount: deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
 module.exports = {
   getArtisans,
   postArtisan,
@@ -144,4 +219,6 @@ module.exports = {
   getArtisansCompta,
   getComptaByArtisan,
   postArtisanCompta,
+  deleteArtisan,
+  deleteArtisanCompta,
 };
