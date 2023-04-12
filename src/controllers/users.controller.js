@@ -60,7 +60,9 @@ async function createUser(req, res) {
       ...userInfo,
       u_password: hashPassword,
     });
-    return res.status(201).json(savedUser);
+    return res
+      .status(201)
+      .json({ item: savedUser, message: `user created successfully` });
   } catch (err) {
     if (err.code === 11000)
       return res.status(300).json({

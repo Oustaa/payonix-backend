@@ -1,5 +1,7 @@
 const { sequelize } = require("../database/sql.connect");
 
+const deleteImage = require("../utils/deleteImage");
+
 const Product = require("../models/products-sql");
 const ProductInventory = require("../models/productInventory-sql");
 const ProductsCategories = require("../models/productCategory-sql");
@@ -225,6 +227,10 @@ async function deleteProduct(req, res) {
       .json({ error_message: "No product ID have been provided" });
 
   try {
+    const product = await Product.findOne({ where: { p_id: id } });
+
+    console.log(product.p_image);
+
     const conflect = await ProductInventory.findAll({
       where: { pi_prod_id: id },
     });
@@ -238,11 +244,13 @@ async function deleteProduct(req, res) {
       where: { p_id: id },
     });
     // check if deleting count is 1
-    if (deletedProductCount >= 1)
+    if (deletedProductCount >= 1) {
+      await deleteImage(product.p_image);
       return res.status(200).json({
         message: `product with the ID: ${id} was deleted successfuly`,
         deletionCount: deletedProductCount,
       });
+    }
     return res.status(400).json({
       error_message: `product with the ID: ${id} was not deleted.`,
       deletionCount: deletedProductCount,
