@@ -10,6 +10,7 @@ const {
   getComptaByArtisan,
   postArtisanCompta,
   deleteArtisan,
+  putArtisanCompta,
   deleteArtisanCompta,
 } = require("../controllers/artisan.controller");
 
@@ -22,5 +23,6 @@ router.get("/comptas", authorization, getArtisansCompta);
 router.get("/:id/comptas", authorization, getComptaByArtisan);
 router.post("/comptas", authorization, postArtisanCompta);
 router.delete("/comptas/:id", authorization, deleteArtisanCompta);
+router.put("/comptas/:id", authorization, putArtisanCompta);
 
 module.exports = router;

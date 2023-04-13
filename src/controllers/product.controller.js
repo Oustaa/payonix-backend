@@ -134,9 +134,11 @@ async function postProductInventory(req, res) {
 }
 
 async function postProduct(req, res) {
-  const productInfo = req.query;
+  const productInfo = req.body;
+  const p_image = req?.file?.filename || "";
 
-  if (!productInfo.p_name || !productInfo.p_category)
+  if (!productInfo.p_name || !productInfo.p_category) {
+    deleteImage(p_image);
     return res.status(400).json({
       error_message: "missing required fields",
       missing_field: [
@@ -144,20 +146,20 @@ async function postProduct(req, res) {
         !productInfo.p_category && "p_category",
       ],
     });
+  }
 
   try {
     const productWithName = await Product.findOne({
       where: { p_name: productInfo.p_name.trim().toLowerCase() },
     });
 
-    if (productWithName)
+    if (productWithName) {
+      deleteImage(p_image);
       return res.status(409).json({
         item: productWithName,
         error_message: `can't create a product with the same name: ${productInfo.p_name}`,
       });
-
-    const p_image = req?.file?.filename || "";
-
+    }
     const createdProductVariety = await Product.create({
       ...productInfo,
       p_name: productInfo.p_name.trim().toLowerCase(),
@@ -173,49 +175,6 @@ async function postProduct(req, res) {
       error_message: "internale server error",
     });
   }
-}
-
-// not tested yet
-async function putProductImage(req, res) {
-  const { id } = req.params;
-  const p_image = `http://localhost:8000/${req.file.filename}`;
-  if (p_image) {
-    const updatedProduct = await Product.update(
-      { p_image },
-      {
-        where: {
-          p_id: id,
-        },
-      }
-    );
-
-    return res.status(201).json({
-      item: updatedProduct,
-      error_message: "product image was updated successfully",
-      p_image: p_image,
-    });
-  }
-}
-
-async function putProductVariety(req, res) {
-  const { id } = req.params;
-  const { p_description } = req.query;
-
-  const info = {};
-  if (req.file) info.p_image = `http://localhost:8000/${req.file.filename}`;
-  if (p_description) info.p_description = p_description;
-
-  const updatedProductVariety = await ProductsVariety.update(info, {
-    where: {
-      p_id: id,
-    },
-  });
-
-  return res.status(201).json({
-    item: updatedProductVariety,
-    error_message: "product image was updated successfully",
-    info,
-  });
 }
 
 async function deleteProduct(req, res) {
@@ -329,6 +288,164 @@ async function deleteProductInventory(req, res) {
   }
 }
 
+async function updateProduct(req, res) {
+  const id = req.params?.id;
+
+  if (!id)
+    return res.status(404).json({
+      error_message: `please provide a product ID`,
+    });
+
+  const productInfo = req.body;
+
+  if (!productInfo.p_name || !productInfo.p_category)
+    return res.status(400).json({
+      error_message: "missing required fields",
+      missing_field: [
+        !productInfo.p_name && "p_name",
+        !productInfo.p_category && "p_category",
+      ],
+    });
+
+  try {
+    const productWithName = await Product.findOne({
+      where: { p_name: productInfo.p_name.trim().toLowerCase() },
+    });
+
+    if (productWithName && productWithName.p_id !== id)
+      return res.status(409).json({
+        item: productWithName,
+        error_message: `can't Update a product with the same name: ${productInfo.p_name}`,
+      });
+
+    const p_image = req?.file?.filename || productInfo.p_image;
+
+    const updatedCount = await Product.update(
+      {
+        ...productInfo,
+        p_name: productInfo.p_name.trim().toLowerCase(),
+        p_image,
+      },
+      {
+        where: {
+          p_id: id,
+        },
+      }
+    );
+
+    if (updatedCount[0] !== 0)
+      return res.status(201).json({
+        message: "Product updated successfully",
+      });
+    return res.status(404).json({ error_message: "Product was not updated!" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+async function updateProductCategory(req, res) {
+  const id = req.params?.id;
+
+  if (!id)
+    return res.status(404).json({
+      error_message: `please provide a product category ID`,
+    });
+
+  const productCategoryInfo = req.body;
+
+  console.log(productCategoryInfo);
+
+  if (!productCategoryInfo.pc_name)
+    return res.status(400).json({
+      error_message: "missing required fields",
+      missing_field: ["pc_name"],
+    });
+
+  try {
+    const productCategoryWithName = await ProductsCategories.findOne({
+      where: { pc_name: productCategoryInfo.pc_name.trim().toLowerCase() },
+    });
+    if (productCategoryWithName && productCategoryWithName.pc_id)
+      return res.status(409).json({
+        item: productCategoryWithName,
+        error_message: `can't Update category with the same name: ${productCategoryInfo.pc_name}`,
+      });
+
+    const updatedCount = await ProductsCategories.update(
+      {
+        pc_name: productCategoryInfo.pc_name.trim().toLowerCase(),
+      },
+      {
+        where: {
+          pc_id: id,
+        },
+      }
+    );
+
+    if (updatedCount[0] !== 0)
+      return res.status(201).json({
+        message: "Products category updated successfully",
+      });
+    return res
+      .status(404)
+      .json({ error_message: "Products category was not updated!" });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
+async function updateProductInventory(req, res) {
+  const id = req.params?.id;
+  console.log(id);
+  if (!id)
+    return res.status(404).json({
+      error_message: `please provide a product Inventory ID`,
+    });
+
+  const productInventoryInfo = req.body;
+
+  if (
+    !productInventoryInfo.pi_artisan_id ||
+    !productInventoryInfo.pi_quantity ||
+    !productInventoryInfo.pi_unit_price ||
+    !productInventoryInfo.pi_prod_id
+  )
+    return res.status(400).json({
+      error_message: "missing required fields",
+      missing_field: [
+        !productInventoryInfo.pi_quantity && "pi_quantity",
+        !productInventoryInfo.pi_unit_price && "pi_unit_price",
+        !productInventoryInfo.pi_prod_id && "pi_prod_id",
+        !productInventoryInfo.pi_artisan_id && "pi_artisan_id",
+      ],
+    });
+
+  try {
+    const updatedCount = await ProductInventory.update(productInventoryInfo, {
+      where: {
+        pi_id: id,
+      },
+    });
+
+    if (updatedCount[0] !== 0)
+      return res.status(201).json({
+        message: "Product Inventory updated successfully",
+      });
+    return res
+      .status(404)
+      .json({ error_message: "Product Inventory was not updated!" });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
 module.exports = {
   getProductsCategories,
   getProductsInventory,
@@ -336,9 +453,10 @@ module.exports = {
   postProductCategory,
   postProduct,
   postProductInventory,
-  putProductImage,
-  putProductVariety,
   deleteProduct,
   deleteProductCategory,
   deleteProductInventory,
+  updateProduct,
+  updateProductCategory,
+  updateProductInventory,
 };

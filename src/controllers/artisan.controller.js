@@ -12,6 +12,7 @@ async function getArtisans(req, res) {
 
     return res.status(200).json(artisan);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error_message: "internale server error" });
   }
 }
@@ -49,14 +50,30 @@ async function postArtisan(req, res) {
 }
 
 async function putArtisanInfo(req, res) {
-  const { id } = req.params;
+  const id = req.params.id;
   const artisanInfo = req.body;
 
+  if (!artisanInfo.a_name)
+    return res.status(400).json({
+      error_message: "missing required field",
+      missing_field: ["a_name"],
+    });
+
   try {
-    const artisanWithName = await Artisans.findOne({ a_id: id });
-    if (!artisanWithName)
+    const conflect = await Artisans.findOne({ where: { a_id: id } });
+    if (!conflect)
       return res.status(404).json({
         message_error: `there is no artisan with the provided id: ${id}`,
+      });
+
+    const nameConflect = await Artisans.findOne({
+      where: { a_name: artisanInfo.a_name },
+    });
+
+    if (nameConflect && nameConflect.a_id !== id)
+      return res.status(400).json({
+        error_message:
+          "Can't update artisan with the given name, allredy exist one.",
       });
 
     const updatedArtisanCount = await Artisans.update(artisanInfo, {
@@ -70,6 +87,7 @@ async function putArtisanInfo(req, res) {
         message: "Artisan updated successfully",
       });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       error_message: "internale server error",
     });
@@ -181,6 +199,47 @@ async function deleteArtisan(req, res) {
   }
 }
 
+async function putArtisanCompta(req, res) {
+  const id = req.params.id;
+  const artisanComptaInfo = req.body;
+
+  if (!artisanComptaInfo.ac_amount || !artisanComptaInfo.ac_artisan_id)
+    return res.status(400).json({
+      error_message: `missing required field`,
+      missing_field: [
+        !artisanComptaInfo.ac_amount && "ac_amount",
+        !artisanComptaInfo.ac_artisan_id && "ac_artisan_id",
+      ],
+    });
+
+  try {
+    const conflect = await ArtisanCompta.findOne({ ac_id: id });
+
+    if (!conflect)
+      return res.status(404).json({
+        message_error: `there is no artisan compta with the provided id: ${id}`,
+      });
+
+    const updatedCount = await ArtisanCompta.update(artisanComptaInfo, {
+      where: {
+        ac_id: id,
+      },
+    });
+    if (updatedCount[0] !== 0)
+      return res.status(201).json({
+        message: "Artisan Compta updated successfully",
+      });
+    return res
+      .status(404)
+      .json({ error_message: "Artisan Compta was not updated!" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error_message: "internale server error",
+    });
+  }
+}
+
 async function deleteArtisanCompta(req, res) {
   const { id } = req.params;
 
@@ -220,5 +279,6 @@ module.exports = {
   getComptaByArtisan,
   postArtisanCompta,
   deleteArtisan,
+  putArtisanCompta,
   deleteArtisanCompta,
 };

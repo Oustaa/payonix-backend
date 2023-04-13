@@ -17,6 +17,4 @@ const deleteImage = (filename) => {
   });
 };
 
-deleteImage("1681212687160-PoufMarocainCuir_600x copy.jpg");
-
 module.exports = deleteImage;
