@@ -11,6 +11,10 @@ const {
   postRawMatInventory,
   postRawMatStock,
   postRawMatType,
+  putRawMatBase,
+  putRawMatInventory,
+  putRawMatStock,
+  putRawMatType,
   putEstematedNbrProd,
   deleteRawMatBase,
   deleteRawMatType,
@@ -21,10 +25,12 @@ const {
 router.get("/bases", authorization, getRawMatBase);
 router.post("/bases", authorization, postRawMatBase);
 router.delete("/bases/:id", authorization, deleteRawMatBase);
+router.put("/bases/:id", authorization, putRawMatBase);
 
 router.get("/types", authorization, getRawMatType);
 router.post("/types", authorization, postRawMatType);
 router.delete("/types/:id", authorization, deleteRawMatType);
+router.put("/types/:id", authorization, putRawMatType);
 
 router.get("/stock", authorization, getRawMatStock);
 router.post("/stock", authorization, postRawMatStock);

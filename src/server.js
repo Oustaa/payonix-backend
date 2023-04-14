@@ -20,6 +20,9 @@ const authRouter = require("./routes/auth.routes");
 
 const app = express();
 
+console.log(JSON.parse(process.env.ALLOWED_ORIGIN));
+console.log(process.env.ALLOWED_ORIGIN);
+
 app.use((req, res, next) => {
   console.log(`url: ${req.url}, method: ${req.method}`);
   console.log(`cookies: ${JSON.stringify(req.cookies)}`);
@@ -30,7 +33,7 @@ app.set("trust proxy", 1);
 
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGIN,
+    origin: JSON.parse(process.env.ALLOWED_ORIGIN),
     credentials: true,
     optionsSuccessStatus: 200,
   })
