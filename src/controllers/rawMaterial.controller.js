@@ -279,6 +279,202 @@ async function postRawMatType(req, res) {
   }
 }
 
+async function putRawMatBase(req, res) {
+  const id = req.params.id;
+  if (!id)
+    return res.status(404).json({
+      error_message: "please provide a raw material id",
+    });
+  const rawMatBaseInfo = req.body;
+
+  if (!rawMatBaseInfo.rmb_name)
+    return res.status(400).json({
+      error_message: "missing required field",
+      missing_field: ["rmb_name"],
+    });
+
+  try {
+    const rawMatBaseWithName = await RawMatBase.findOne({
+      where: { rmb_name: rawMatBaseInfo.rmb_name.trim().toLowerCase() },
+    });
+    if (rawMatBaseWithName && rawMatBaseWithName.rmb_id !== id)
+      return res.status(409).json({
+        item: rawMatBaseWithName,
+        error_message: "can't update raw material base with the same name",
+      });
+
+    const updatedCount = await RawMatBase.update(
+      {
+        rmb_name: rawMatBaseInfo.rmb_name.trim().toLowerCase(),
+      },
+      {
+        where: { rmb_id: id },
+      }
+    );
+
+    if (updatedCount[0] !== 0)
+      return res.status(201).json({
+        message: "Raw Material Base updated successfully",
+      });
+    return res
+      .status(404)
+      .json({ error_message: "Raw Material Base was not updated!" });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+      error: error,
+    });
+  }
+}
+
+async function putRawMatInventory(req, res) {
+  const id = req.params.id;
+  const inventoryInfo = req.body;
+
+  if (
+    !inventoryInfo.rmi_quantity ||
+    !inventoryInfo.rmi_artisan_id ||
+    !inventoryInfo.rmi_raw_mat_stock_id
+  )
+    return res.status(400).json({
+      error_message: `missing required field`,
+      missing_field: [
+        !inventoryInfo.rmi_quantity && "rmi_quantity",
+        !inventoryInfo.rmi_artisan_id && "rmi_artisan_id",
+        !inventoryInfo.rmi_raw_mat_stock_id && "rmi_raw_mat_stock_id",
+      ],
+    });
+
+  try {
+    if (inventoryInfo.rmi_raw_mat_stock_id && inventoryInfo.rmi_quantity) {
+      const rms_up = await RawMatStock.findOne({
+        where: { rms_id: inventoryInfo.rmi_raw_mat_stock_id },
+      });
+
+      var rmi_unit_price = rms_up.rms_unit_price;
+      var rmi_amount = rmi_unit_price * inventoryInfo.rmi_quantity;
+
+      if (inventoryInfo.rmi_estimated_nbr_prod) {
+        inventoryInfo.rmi_rawMat_price_prod =
+          rmi_amount / inventoryInfo.rmi_estimated_nbr_prod;
+        inventoryInfo.rmi_rawMat_prod =
+          inventoryInfo.rmi_quantity / inventoryInfo.rmi_estimated_nbr_prod;
+      }
+    }
+    const createdRawMatInventory = await RawMatInventory.create({
+      ...inventoryInfo,
+      rmi_unit_price,
+      rmi_amount,
+      rmi_id,
+    });
+
+    return res.status(201).json({
+      item: createdRawMatInventory,
+      message: "material inventory was created successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+      error: error,
+    });
+  }
+}
+
+async function putRawMatStock(req, res) {
+  const rawMatStockInfo = req.body;
+  const data = rawMatStockInfo.rms_date_stock;
+
+  const query = `
+          SELECT rmt.rmt_name, rmb.rmb_name from RowMaterialTypes rmt
+          left JOIN RowMaterialBases rmb
+          ON rmb.rmb_id = rmt.rmt_raw_mat_base_type
+          WHERE rmt.rmt_id = ? 
+            `;
+  if (
+    !rawMatStockInfo.rms_quantity ||
+    !rawMatStockInfo.rms_unit_price ||
+    !rawMatStockInfo.rms_raw_mat_id
+  )
+    return res.status(400).json({
+      error_message: `missing required field`,
+      missing_field: [
+        !rawMatStockInfo.rms_quantity && "rms_quantity",
+        !rawMatStockInfo.rms_unit_price && "rms_unit_price",
+        !rawMatStockInfo.rms_raw_mat_id && "rms_raw_mat_id",
+      ],
+    });
+
+  const [{ rmt_name, rmb_name }] = await sequelize.query(query, {
+    type: sequelize.QueryTypes.SELECT,
+    replacements: [rawMatStockInfo.rms_raw_mat_id],
+  });
+  const rms_id = `${data}-${rmb_name}-${rmt_name}`;
+
+  const rms_amount =
+    rawMatStockInfo?.rms_quantity * rawMatStockInfo?.rms_unit_price;
+
+  try {
+    const createdRawMatStock = await RawMatStock.create({
+      ...rawMatStockInfo,
+      rms_id,
+      rms_availability: rawMatStockInfo.rms_quantity,
+      rms_amount,
+    });
+
+    return res.status(201).json({
+      item: createdRawMatStock,
+      message: "material stock was created successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "server error",
+    });
+  }
+}
+
+async function putRawMatType(req, res) {
+  const id = req.params.id;
+  const rawMatTypeInfo = req.body;
+
+  if (!rawMatTypeInfo.rmt_name || !rawMatTypeInfo.rmt_raw_mat_base_type)
+    return res.status(400).json({
+      error_message: `missing required field`,
+      missing_field: [
+        !rawMatTypeInfo.rmt_name && "rmt_name",
+        !rawMatTypeInfo.rmt_raw_mat_base_type && "rmt_raw_mat_base_type",
+      ],
+    });
+
+  try {
+    const conflect = await RawMatType.findOne({
+      where: { rmt_name: rawMatTypeInfo.rmt_name },
+    });
+
+    if (conflect)
+      return res.status(409).json({
+        error_message: `can't update raw material type with the name: ${rawMatTypeInfo.rmt_name}`,
+      });
+
+    const updateCount = await RawMatType.create({
+      ...rawMatTypeInfo,
+      rmt_name: rawMatTypeInfo.rmt_name.toLowerCase(),
+    });
+
+    if (updateCount[0] !== 0)
+      return res.status(201).json({
+        message: "Raw Material type updated successfully",
+      });
+    return res
+      .status(404)
+      .json({ error_message: "Raw Material Type was not updated!" });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+      error: error,
+    });
+  }
+}
+
 async function putEstematedNbrProd(req, res) {
   const { id } = req.params;
   const { rmi_estimated_nbr_prod } = req.body;

@@ -30,7 +30,7 @@ app.set("trust proxy", 1);
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://payonix.onrender.com"],
+    origin: process.env.ALLOWED_ORIGIN,
     credentials: true,
     optionsSuccessStatus: 200,
   })
