@@ -28,6 +28,8 @@ app.use((req, res, next) => {
 
 app.set("trust proxy", 1);
 
+console.log(process.env.ALLOWED_ORIGIN);
+
 app.use(
   cors({
     origin: process.env.ALLOWED_ORIGIN,
