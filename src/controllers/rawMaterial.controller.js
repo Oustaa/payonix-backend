@@ -327,6 +327,56 @@ async function putRawMatBase(req, res) {
   }
 }
 
+async function putRawMatType(req, res) {
+  const id = req.params.id;
+  const rawMatTypeInfo = req.body;
+
+  if (!rawMatTypeInfo.rmt_name || !rawMatTypeInfo.rmt_raw_mat_base_type)
+    return res.status(400).json({
+      error_message: `missing required field`,
+      missing_field: [
+        !rawMatTypeInfo.rmt_name && "rmt_name",
+        !rawMatTypeInfo.rmt_raw_mat_base_type && "rmt_raw_mat_base_type",
+      ],
+    });
+
+  try {
+    const conflect = await RawMatType.findOne({
+      where: { rmt_name: rawMatTypeInfo.rmt_name },
+    });
+
+    if (conflect)
+      return res.status(409).json({
+        error_message: `can't update raw material type with the name: ${rawMatTypeInfo.rmt_name}`,
+      });
+
+    const updateCount = await RawMatType.update(
+      {
+        ...rawMatTypeInfo,
+        rmt_name: rawMatTypeInfo.rmt_name.toLowerCase(),
+      },
+      {
+        where: {
+          rmt_id: id,
+        },
+      }
+    );
+
+    if (updateCount[0] !== 0)
+      return res.status(201).json({
+        message: "Raw Material type updated successfully",
+      });
+    return res
+      .status(404)
+      .json({ error_message: "Raw Material Type was not updated!" });
+  } catch (error) {
+    return res.status(500).json({
+      error_message: "internale server error",
+      error: error,
+    });
+  }
+}
+
 async function putRawMatInventory(req, res) {
   const id = req.params.id;
   const inventoryInfo = req.body;
@@ -428,49 +478,6 @@ async function putRawMatStock(req, res) {
   } catch (error) {
     return res.status(500).json({
       error_message: "server error",
-    });
-  }
-}
-
-async function putRawMatType(req, res) {
-  const id = req.params.id;
-  const rawMatTypeInfo = req.body;
-
-  if (!rawMatTypeInfo.rmt_name || !rawMatTypeInfo.rmt_raw_mat_base_type)
-    return res.status(400).json({
-      error_message: `missing required field`,
-      missing_field: [
-        !rawMatTypeInfo.rmt_name && "rmt_name",
-        !rawMatTypeInfo.rmt_raw_mat_base_type && "rmt_raw_mat_base_type",
-      ],
-    });
-
-  try {
-    const conflect = await RawMatType.findOne({
-      where: { rmt_name: rawMatTypeInfo.rmt_name },
-    });
-
-    if (conflect)
-      return res.status(409).json({
-        error_message: `can't update raw material type with the name: ${rawMatTypeInfo.rmt_name}`,
-      });
-
-    const updateCount = await RawMatType.create({
-      ...rawMatTypeInfo,
-      rmt_name: rawMatTypeInfo.rmt_name.toLowerCase(),
-    });
-
-    if (updateCount[0] !== 0)
-      return res.status(201).json({
-        message: "Raw Material type updated successfully",
-      });
-    return res
-      .status(404)
-      .json({ error_message: "Raw Material Type was not updated!" });
-  } catch (error) {
-    return res.status(500).json({
-      error_message: "internale server error",
-      error: error,
     });
   }
 }
